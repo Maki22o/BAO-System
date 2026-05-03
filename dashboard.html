@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard | BAO Storage</title>
+<link rel="stylesheet" href="dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <header class="sidebar-header">
+      <h2>BAO Storage</h2>
+      <p class="sub">Inventory Management</p>
+    </header>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="categories.html">Categories</a>
+      <a href="transactions.html">Transactions</a>
+      <a href="admin.html">Admin</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+
+    <footer class="sidebar-footer">
+      <button class="logout" onclick="logout()">Logout</button>
+    </footer>
+  </aside>
+
+  <main class="main">
+
+    <!-- HEADER -->
+    <header class="topbar">
+
+      <div class="topbar-left">
+        <h1>Dashboard</h1>
+        <p>Welcome back! Here's what's happening with your inventory.</p>
+      </div>
+
+      <div class="topbar-right">
+        <div class="notif-container">
+
+          <button class="notif-btn" onclick="toggleNotif()">
+            🔔
+            <span id="notifDot" class="notif-badge" style="display:none;">0</span>
+          </button>
+
+          <!-- 🔥 UPDATED NOTIFICATION PANEL -->
+          <div id="notifPanel" class="notif-panel">
+
+            <div class="notif-header">
+              <h4>Notifications</h4>
+              <span class="mark-read" onclick="clearNotif()">Mark all as read</span>
+            </div>
+
+            <div class="notif-divider"></div>
+
+            <!-- 🔥 DYNAMIC LIST -->
+            <div id="notifList" class="notif-list">
+              <!-- JS will inject notif-item here -->
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </header>
+
+    <!-- SCROLL AREA -->
+    <div class="main-content">
+
+      <!-- ================= STATS ================= -->
+      <section class="stats">
+
+        <article class="card">
+          <p>Total Products</p>
+          <h3 id="totalProducts">0</h3>
+        </article>
+
+        <article class="card">
+          <p>Low Stock Items</p>
+          <h3 id="lowStock">0</h3>
+        </article>
+
+        <article class="card">
+          <p>Total Sales</p>
+          <h3 id="totalSales">₱0</h3>
+        </article>
+
+        <article class="card">
+          <p>Items Sold</p>
+          <h3 id="totalItemsSold">0</h3>
+        </article>
+
+        <article class="card">
+          <p>Today's Sales</p>
+          <h3 id="dailySales">₱0</h3>
+        </article>
+
+        <article class="card">
+          <p>Total Value</p>
+          <h3 id="totalValue">₱0</h3>
+        </article>
+
+      </section>
+
+      <!-- ================= CHARTS ================= -->
+      <section class="grid">
+
+        <div class="panel">
+          <h3>Product Quantities</h3>
+          <canvas id="barChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <h3>Inventory by Category</h3>
+          <canvas id="pieChart"></canvas>
+        </div>
+
+      </section>
+
+      <!-- ================= EXTRA ================= -->
+      <section class="grid">
+
+        <div class="panel">
+          <h3>⚠ Low Stock Alerts</h3>
+          <div id="lowStockList"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Recent Activity</h3>
+          <div id="recentActivity"></div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="auth.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>

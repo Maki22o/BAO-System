@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAO Storage System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-shapes">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<div class="wrapper">
+  <div class="card">
+
+    <h2>Welcome back</h2>
+    <p class="subtitle">Please enter your details</p>
+
+    <!-- ✅ FORM AUTOCOMPLETE FIX -->
+    <div class="form" autocomplete="off">
+
+      <div class="form-group">
+        <!-- ✅ placeholder=" " fixes floating label -->
+        <input type="email" id="loginEmail" required placeholder=" " autocomplete="email">
+        <label>Email Address</label>
+      </div>
+
+      <div class="form-group">
+        <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
+        <label>Password</label>
+        <span class="toggle" onclick="togglePassword('loginPassword')">👁</span>
+      </div>
+
+      <div class="form-row">
+
+        <label class="remember">
+          <input type="checkbox" id="rememberMe">
+          <span>Remember me</span>
+        </label>
+
+        <!-- ✅ PREVENT PAGE JUMP -->
+        <a href="#" class="forgot" onclick="event.preventDefault(); openModal();">
+          Forgot password?
+        </a>
+
+      </div>
+
+      <button class="btn" onclick="login(this)">Sign In</button>
+
+    </div>
+
+    <p class="bottom-text">
+      Don’t have an account? <a href="register.html">Create an account</a>
+    </p>
+
+  </div>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3>Reset Password</h3>
+    <p>Enter your email to receive reset instructions</p>
+
+    <input type="email" id="resetEmail" placeholder="Enter your email" autocomplete="email">
+
+    <button onclick="sendReset()">Send Link</button>
+    <button class="close-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

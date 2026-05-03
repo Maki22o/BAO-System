@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Transactions | BAO Storage</title>
+<link rel="stylesheet" href="transactions.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <h2>BAO Storage</h2>
+    <p class="sub">Inventory Management</p>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="categories.html">Categories</a>
+      <a href="transactions.html" class="active">Transactions</a>
+      <a href="admin.html">Admin</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1>Transactions</h1>
+        <p>Track all sales and inventory activity</p>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+
+      <input 
+        type="text" 
+        id="search" 
+        placeholder=" Search product..." 
+        oninput="resetAndRender()"
+      >
+
+      <select id="filter" onchange="resetAndRender()">
+        <option value="All">All Categories</option>
+      </select>
+
+      <input 
+        type="date" 
+        id="dateFrom" 
+        title="From date"
+        onchange="resetAndRender()"
+      >
+
+      <input 
+        type="date" 
+        id="dateTo" 
+        title="To date"
+        onchange="resetAndRender()"
+      >
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-container" id="tableContainer">
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Buyer</th> <!-- 🔥 NEW -->
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <!-- EMPTY STATE -->
+      <div id="emptyState" class="empty">
+        No transactions yet
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="transactions.js"></script>
+</body>
+</html>

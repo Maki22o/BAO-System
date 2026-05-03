@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Categories | BAO Storage</title>
+<link rel="stylesheet" href="categories.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <h2>BAO Storage</h2>
+    <p class="sub">Inventory Management</p>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="categories.html" class="active">Categories</a>
+      <a href="transactions.html">Transactions</a>
+      <a href="admin.html">Admin</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <h1>Categories</h1>
+        <p>Manage your product categories</p>
+      </div>
+
+      <button class="add-btn" onclick="openAdd()">+ Add Category</button>
+    </header>
+
+    <section class="controls">
+      <input 
+        type="text" 
+        id="searchCat" 
+        placeholder="Search category..."
+        oninput="renderTable()"
+      >
+    </section>
+
+    <section class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Products</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <p>No categories found</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <h2 id="modalTitle">Add Category</h2>
+
+    <div class="form">
+
+      <!-- ✅ STABLE INPUT -->
+      <div class="form-group">
+        <input 
+          type="text" 
+          id="name" 
+          placeholder=" " 
+          autocomplete="off"
+          required
+        >
+        <label for="name">Category Name</label>
+      </div>
+
+      <!-- ✅ BUTTONS -->
+      <div class="modal-actions">
+        <button type="button" class="btn cancel" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn primary" onclick="saveCategory()">Save</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast"></div>
+
+<script src="categories.js"></script>
+
+</body>
+</html>

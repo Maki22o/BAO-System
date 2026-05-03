@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reports | BAO Storage</title>
+<link rel="stylesheet" href="reports.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <h2>BAO Storage</h2>
+    <p class="sub">Inventory Management</p>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="categories.html">Categories</a>
+      <a href="transactions.html">Transactions</a>
+      <a href="admin.html" id="adminLink">Admin</a> <!-- 🔥 ADD ID -->
+      <a href="reports.html" class="active">Reports</a>
+    </nav>
+
+    <footer class="sidebar-footer">
+      <button class="logout" onclick="logout()">Logout</button>
+    </footer>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main">
+
+    <div class="topbar">
+      <div>
+        <h1>Reports</h1>
+        <p>Analyze your sales and performance</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <button onclick="loadReports()">Apply</button>
+    </div>
+
+    <div class="stats">
+      <div class="card">
+        <p>Total Sales</p>
+        <h3 id="totalSales">₱0</h3>
+      </div>
+
+      <div class="card">
+        <p>Transactions</p>
+        <h3 id="totalTxns">0</h3>
+      </div>
+
+      <div class="card">
+        <p>Average Sale</p>
+        <h3 id="avgSale">₱0</h3>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Sales Trend</h3>
+      <canvas id="salesChart"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>Product Performance</h3>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Sold</th>
+              <th>Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="reportTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Insights</h3>
+      <div id="insights"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ================= AUTH SCRIPT ================= -->
+<script>
+let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+// 🔐 Redirect if not logged in
+if (!currentUser) {
+  window.location.href = "index.html";
+}
+
+// 🔥 Hide Admin if not admin
+if (currentUser.role !== "admin") {
+  let adminLink = document.getElementById("adminLink");
+  if (adminLink) adminLink.style.display = "none";
+}
+
+// Logout
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
+</script>
+
+<!-- REPORTS LOGIC -->
+<script src="reports.js"></script>
+
+</body>
+</html>

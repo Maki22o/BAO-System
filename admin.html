@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel | BAO Storage</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+
+    <header class="sidebar-header">
+      <h2>BAO Storage</h2>
+      <p class="sub">Inventory Management</p>
+    </header>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="products.html">Products</a>
+      <a href="categories.html">Categories</a>
+      <a href="transactions.html">Transactions</a>
+      <a href="admin.html" class="active">Admin Panel</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+
+    <footer class="sidebar-footer">
+      <button class="logout" onclick="logout()">Logout</button>
+    </footer>
+
+  </aside>
+
+  <main class="main">
+
+    <!-- HEADER (fixed feel) -->
+    <div class="topbar">
+      <div>
+        <h1>Admin Panel</h1>
+        <p>Manage users and roles</p>
+      </div>
+
+      <button class="add-btn" onclick="openModal()">+ Add User</button>
+    </div>
+
+    <!-- 🔥 SCROLL AREA -->
+    <div class="main-content">
+
+      <div class="stats">
+        <div class="card">
+          <p>Total Users</p>
+          <h3 id="totalUsers">0</h3>
+        </div>
+        <div class="card">
+          <p>Admins</p>
+          <h3 id="totalAdmins">0</h3>
+        </div>
+        <div class="card">
+          <p>Staff</p>
+          <h3 id="totalStaff">0</h3>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Password</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+
+      <div class="table-container" style="margin-top:20px;">
+        <h3 style="padding:15px;">Activity Logs</h3>
+        <div id="logList" style="padding:15px; font-size:13px;"></div>
+      </div>
+
+    </div> <!-- 🔥 END SCROLL AREA -->
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <h3 id="modalTitle">Add User</h3>
+
+    <input type="text" id="username" placeholder="Username">
+
+    <div class="password-wrapper">
+      <input type="password" id="password" placeholder="Password">
+      <span class="eye" onclick="togglePassword()">👁</span>
+    </div>
+
+    <select id="role">
+      <option value="admin">Admin</option>
+      <option value="staff">Staff</option>
+    </select>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveUser()">Save</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
