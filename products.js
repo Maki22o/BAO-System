@@ -58,6 +58,7 @@ function showToast(message){
 // Auth
 
 async function checkAuth(){
+
   const ok =
     await window
       .initProtectedPageAuth();
@@ -81,9 +82,9 @@ async function fetchCategories(){
 
       .select("*")
 
-      .order("created_at", {
+      .order("name", {
 
-        ascending: false
+        ascending: true
       });
 
   if(error){
@@ -138,7 +139,7 @@ async function fetchProducts(){
   renderTable();
 }
 
-// Load dropdown
+// Categories dropdown
 
 function loadCategoriesDropdown(){
 
@@ -172,8 +173,11 @@ function loadCategoriesDropdown(){
   if(filter){
 
     filter.innerHTML = `
+
       <option value="All">
+
         All Categories
+
       </option>
     `;
 
@@ -216,6 +220,7 @@ function renderTable(){
     products.filter(product => {
 
       const matchSearch =
+
         product.name
           ?.toLowerCase()
           .includes(search);
@@ -278,26 +283,37 @@ function renderTable(){
         <tr>
 
           <td>
+
             ${product.id}
+
           </td>
 
           <td>
+
             ${product.name}
+
           </td>
 
           <td>
+
             ${
               product.categories?.name ||
+
               "Uncategorized"
             }
+
           </td>
 
           <td>
+
             ${quantity}
+
           </td>
 
           <td>
+
             ₱${price.toLocaleString()}
+
           </td>
 
           <td>
@@ -350,7 +366,7 @@ function renderTable(){
     }).join("");
 }
 
-// Open modal
+// Open add
 
 function openAdd(){
 
@@ -706,7 +722,7 @@ async function confirmSell(){
     if(updateError)
       throw updateError;
 
-    // Insert transaction
+    // Transaction
 
     await supabaseClient
 
@@ -790,5 +806,7 @@ window.addEventListener(
     await fetchCategories();
 
     await fetchProducts();
+
+    lucide.createIcons();
   }
 );

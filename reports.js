@@ -1,166 +1,638 @@
-const SUPABASE_URL = "https://dpdchbusvfktlqjaxdlb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-const OWNER_COLUMNS = ["user_id", "owner_id", "created_by"];
+const SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 let currentUser = null;
-let ownerColumn = "user_id";
-let chart = null;
-let normalized = [];
 
-function logSupabaseError(stage, error, context = {}) {
-  console.error(`[Reports:${stage}]`, {
-    message: error?.message,
-    details: error?.details,
-    hint: error?.hint,
-    code: error?.code,
-    status: error?.status,
-    context
-  });
-}
+let salesChart = null;
 
-async function checkAuth() {
-  const ok = await window.initProtectedPageAuth();
-  if (!ok) return false;
-  currentUser = window.appAuth.user;
+let categoryChart = null;
+
+let transactions = [];
+
+// Auth
+
+async function checkAuth(){
+
+  const ok =
+    await window
+      .initProtectedPageAuth();
+
+  if(!ok) return false;
+
+  currentUser =
+    window.appAuth.user;
+
   return true;
 }
 
-async function fetchOwned(table, selectClause) {
-  let data = null;
-  let error = null;
-  ({ data, error } = await supabaseClient.from(table).select(selectClause).eq(ownerColumn, currentUser.id));
-  if (error) {
-    const msg = `${error.message || ""} ${error.details || ""}`.toLowerCase();
-    if (msg.includes("column") && msg.includes(ownerColumn.toLowerCase())) {
-      ({ data, error } = await supabaseClient.from(table).select(selectClause));
-    }
-  }
-  if (error) throw error;
-  return data || [];
-}
+// Helpers
 
-function normalizeTransactions(rows) {
-  return rows
-    .filter((row) => {
-      const owner = row.user_id ?? row.owner_id ?? row.created_by  ?? null;
-      return !owner || String(owner) === String(currentUser.id);
-    })
-    .map((row) => ({
-      name: row.product_name ?? row.name ?? "Unknown",
-      qty: Number(row.qty ?? row.quantity ?? 0),
-      total: Number(row.total ?? row.total_amount ?? 0),
-      date: row.created_at ?? row.date ?? new Date().toISOString()
-    }));
-}
+function getEl(id){
 
-function getEl(id) {
   return document.getElementById(id);
 }
 
-function logout() {
-  supabaseClient.auth.signOut().finally(() => {
-    window.location.href = "index.html";
-  });
+// Logout
+
+function logout(){
+
+  supabaseClient.auth
+    .signOut()
+    .finally(() => {
+
+      window.location.href =
+        "index.html";
+    });
 }
 
-async function loadReports() {
-  try {
-    const rows = await fetchOwned("transactions", "*");
-    normalized = normalizeTransactions(rows);
-  } catch (error) {
-    logSupabaseError("loadTransactions", error, { ownerColumn });
-    normalized = [];
+// Fetch reports
+
+async function fetchTransactions(){
+
+  const { data, error } =
+    await supabaseClient
+
+      .from("transactions")
+
+      .select(`
+        *,
+        products (
+          id,
+          name,
+          category_id,
+          price,
+          categories (
+            id,
+            name
+          )
+        )
+      `)
+
+      .order("created_at", {
+
+        ascending: true
+      });
+
+  if(error){
+
+    console.error(error);
+
+    transactions = [];
+
+    return;
   }
 
-  const start = getEl("startDate")?.value;
-  const end = getEl("endDate")?.value;
-  const startDate = start ? new Date(`${start}T00:00:00`) : null;
-  const endDate = end ? new Date(`${end}T23:59:59`) : null;
+  transactions = data || [];
+}
 
-  let filtered = normalized.filter((t) => {
-    const d = new Date(t.date);
-    if (isNaN(d)) return false;
-    if (startDate && d < startDate) return false;
-    if (endDate && d > endDate) return false;
-    return true;
-  });
+// Reports
 
-  if (filtered.length === 0 && normalized.length > 0) filtered = normalized;
+async function loadReports(){
 
-  const totalSales = filtered.reduce((sum, t) => sum + Number(t.total || 0), 0);
-  const totalTxns = filtered.length;
-  const avg = totalTxns ? totalSales / totalTxns : 0;
+  await fetchTransactions();
 
-  if (getEl("totalSales")) getEl("totalSales").innerText = `P${totalSales.toLocaleString()}`;
-  if (getEl("totalTxns")) getEl("totalTxns").innerText = totalTxns;
-  if (getEl("avgSale")) getEl("avgSale").innerText = `P${avg.toFixed(2)}`;
+  const start =
+    getEl("startDate")?.value;
 
-  const map = {};
-  filtered.forEach((t) => {
-    if (!map[t.name]) map[t.name] = { qty: 0, revenue: 0 };
-    map[t.name].qty += Number(t.qty || 0);
-    map[t.name].revenue += Number(t.total || 0);
-  });
+  const end =
+    getEl("endDate")?.value;
 
-  const table = getEl("reportTable");
-  if (table) {
-    table.innerHTML = "";
-    const sorted = Object.entries(map).sort((a, b) => b[1].qty - a[1].qty);
-    if (sorted.length === 0) table.innerHTML = `<tr><td colspan="3">No data</td></tr>`;
-    sorted.forEach(([name, data]) => {
-      table.innerHTML += `<tr><td>${name}</td><td>${data.qty}</td><td>P${data.revenue.toLocaleString()}</td></tr>`;
+  const startDate =
+
+    start
+
+    ? new Date(`${start}T00:00:00`)
+
+    : null;
+
+  const endDate =
+
+    end
+
+    ? new Date(`${end}T23:59:59`)
+
+    : null;
+
+  let filtered =
+    transactions.filter(transaction => {
+
+      const date =
+        new Date(
+          transaction.created_at
+        );
+
+      if(startDate && date < startDate)
+        return false;
+
+      if(endDate && date > endDate)
+        return false;
+
+      return true;
     });
 
-    const insights = getEl("insights");
-    if (insights) {
-      insights.innerHTML = "";
-      if (sorted.length > 0) insights.innerHTML += `<p>Top Product: <b>${sorted[0][0]}</b></p>`;
-      if (sorted.length > 1) insights.innerHTML += `<p>Low Performing: <b>${sorted[sorted.length - 1][0]}</b></p>`;
-      if (totalSales === 0) insights.innerHTML += `<p>No sales in selected range</p>`;
-      if (totalSales > 0) insights.innerHTML += `<p>Total Revenue: P${totalSales.toLocaleString()}</p>`;
+  // Totals
+
+  const totalSales =
+    filtered.reduce(
+      (sum, transaction) =>
+
+        sum +
+        Number(
+          transaction.total || 0
+        ),
+
+      0
+    );
+
+  const totalTransactions =
+    filtered.length;
+
+  const totalItems =
+    filtered.reduce(
+      (sum, transaction) =>
+
+        sum +
+        Number(
+          transaction.quantity || 0
+        ),
+
+      0
+    );
+
+  const averageSale =
+
+    totalTransactions
+
+    ? totalSales /
+      totalTransactions
+
+    : 0;
+
+  // KPI
+
+  getEl("totalSales")
+    .innerText =
+      `₱${totalSales.toLocaleString()}`;
+
+  getEl("totalTxns")
+    .innerText =
+      totalTransactions;
+
+  getEl("avgSale")
+    .innerText =
+      `₱${averageSale.toFixed(2)}`;
+
+  getEl("totalItems")
+    .innerText =
+      totalItems;
+
+  // Product performance
+
+  const productMap = {};
+
+  filtered.forEach(transaction => {
+
+    const productName =
+
+      transaction.products?.name ||
+
+      "Unknown Product";
+
+    const categoryName =
+
+      transaction.products
+        ?.categories?.name ||
+
+      "Uncategorized";
+
+    const price =
+      Number(
+        transaction.products?.price || 0
+      );
+
+    if(!productMap[productName]){
+
+      productMap[productName] = {
+
+        category:
+          categoryName,
+
+        sold: 0,
+
+        revenue: 0,
+
+        avgPrice: price
+      };
     }
+
+    productMap[productName]
+      .sold += Number(
+        transaction.quantity || 0
+      );
+
+    productMap[productName]
+      .revenue += Number(
+        transaction.total || 0
+      );
+  });
+
+  // Table
+
+  const table =
+    getEl("reportTable");
+
+  if(table){
+
+    table.innerHTML = "";
+
+    const sorted =
+      Object.entries(productMap)
+
+        .sort(
+          (a, b) =>
+
+            b[1].revenue -
+
+            a[1].revenue
+        );
+
+    if(sorted.length === 0){
+
+      table.innerHTML = `
+
+        <tr>
+
+          <td colspan="5">
+
+            No data found
+
+          </td>
+
+        </tr>
+      `;
+    }
+
+    sorted.forEach(([name, data]) => {
+
+      table.innerHTML += `
+
+        <tr>
+
+          <td>
+
+            ${name}
+
+          </td>
+
+          <td>
+
+            ${data.category}
+
+          </td>
+
+          <td>
+
+            ${data.sold}
+
+          </td>
+
+          <td>
+
+            ₱${data.revenue.toLocaleString()}
+
+          </td>
+
+          <td>
+
+            ₱${data.avgPrice.toFixed(2)}
+
+          </td>
+
+        </tr>
+      `;
+    });
   }
 
-  const canvas = getEl("salesChart");
-  if (!canvas) return;
+  // Insights
 
-  const daily = {};
-  filtered.forEach((t) => {
-    const d = new Date(t.date).toLocaleDateString();
-    if (!daily[d]) daily[d] = 0;
-    daily[d] += Number(t.total || 0);
-  });
+  const insights =
+    getEl("insights");
 
-  const labels = Object.keys(daily);
-  const values = Object.values(daily);
-  if (chart) chart.destroy();
+  if(insights){
 
-  chart = new Chart(canvas, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        borderColor: "#6366f1",
-        backgroundColor: "rgba(99,102,241,0.2)",
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.05)" } }
-      }
+    insights.innerHTML = "";
+
+    const sorted =
+      Object.entries(productMap)
+
+        .sort(
+          (a, b) =>
+
+            b[1].revenue -
+
+            a[1].revenue
+        );
+
+    if(sorted.length > 0){
+
+      insights.innerHTML += `
+
+        <div class="insight-item">
+
+          <div class="insight-label">
+
+            Top Product
+
+          </div>
+
+          <div class="insight-value">
+
+            ${sorted[0][0]}
+
+          </div>
+
+        </div>
+      `;
+
+      insights.innerHTML += `
+
+        <div class="insight-item">
+
+          <div class="insight-label">
+
+            Top Category
+
+          </div>
+
+          <div class="insight-value">
+
+            ${sorted[0][1].category}
+
+          </div>
+
+        </div>
+      `;
     }
+
+    insights.innerHTML += `
+
+      <div class="insight-item">
+
+        <div class="insight-label">
+
+          Total Revenue
+
+        </div>
+
+        <div class="insight-value">
+
+          ₱${totalSales.toLocaleString()}
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  // Sales trend
+
+  const salesByDate = {};
+
+  filtered.forEach(transaction => {
+
+    const date =
+      new Date(
+        transaction.created_at
+      ).toLocaleDateString();
+
+    if(!salesByDate[date]){
+
+      salesByDate[date] = 0;
+    }
+
+    salesByDate[date] +=
+      Number(
+        transaction.total || 0
+      );
   });
+
+  const salesLabels =
+    Object.keys(salesByDate);
+
+  const salesValues =
+    Object.values(salesByDate);
+
+  // Sales chart
+
+  const salesCanvas =
+    getEl("salesChart");
+
+  if(salesCanvas){
+
+    if(salesChart){
+
+      salesChart.destroy();
+    }
+
+    const gradient =
+      salesCanvas
+        .getContext("2d")
+        .createLinearGradient(
+          0,
+          0,
+          0,
+          400
+        );
+
+    gradient.addColorStop(
+      0,
+      "rgba(124,58,237,0.45)"
+    );
+
+    gradient.addColorStop(
+      1,
+      "rgba(124,58,237,0)"
+    );
+
+    salesChart =
+      new Chart(salesCanvas, {
+
+        type: "line",
+
+        data: {
+
+          labels:
+            salesLabels,
+
+          datasets: [{
+
+            data:
+              salesValues,
+
+            borderColor:
+              "#8b5cf6",
+
+            backgroundColor:
+              gradient,
+
+            fill: true,
+
+            tension: 0.45,
+
+            borderWidth: 3,
+
+            pointRadius: 5,
+
+            pointHoverRadius: 7,
+
+            pointBackgroundColor:
+              "#8b5cf6"
+          }]
+        },
+
+        options: {
+
+          responsive: true,
+
+          maintainAspectRatio: false,
+
+          plugins: {
+
+            legend: {
+
+              display: false
+            }
+          },
+
+          scales: {
+
+            x: {
+
+              grid: {
+
+                color:
+                  "rgba(255,255,255,0.04)"
+              }
+            },
+
+            y: {
+
+              beginAtZero: true,
+
+              grid: {
+
+                color:
+                  "rgba(255,255,255,0.05)"
+              }
+            }
+          }
+        }
+      });
+  }
+
+  // Category chart
+
+  const categoryMap = {};
+
+  filtered.forEach(transaction => {
+
+    const category =
+
+      transaction.products
+        ?.categories?.name ||
+
+      "Uncategorized";
+
+    if(!categoryMap[category]){
+
+      categoryMap[category] = 0;
+    }
+
+    categoryMap[category] +=
+      Number(
+        transaction.total || 0
+      );
+  });
+
+  const categoryCanvas =
+    getEl("categoryChart");
+
+  if(categoryCanvas){
+
+    if(categoryChart){
+
+      categoryChart.destroy();
+    }
+
+    categoryChart =
+      new Chart(categoryCanvas, {
+
+        type: "doughnut",
+
+        data: {
+
+          labels:
+            Object.keys(categoryMap),
+
+          datasets: [{
+
+            data:
+              Object.values(categoryMap),
+
+            backgroundColor: [
+
+              "#8b5cf6",
+              "#22c55e",
+              "#f59e0b",
+              "#3b82f6"
+            ],
+
+            borderWidth: 0
+          }]
+        },
+
+        options: {
+
+          responsive: true,
+
+          maintainAspectRatio: false,
+
+          cutout: "65%",
+
+          plugins: {
+
+            legend: {
+
+              position: "bottom"
+            }
+          }
+        }
+      });
+  }
 }
 
-window.addEventListener("load", async () => {
-  const ok = await checkAuth();
-  if (!ok) return;
-  await loadReports();
-});
+// Init
+
+window.addEventListener(
+  "load",
+  async () => {
+
+    const ok =
+      await checkAuth();
+
+    if(!ok) return;
+
+    await loadReports();
+
+    lucide.createIcons();
+  }
+);

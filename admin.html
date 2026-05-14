@@ -1,139 +1,566 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Management | BAO Storage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="admin.css">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    User Management | BAO Storage
+  </title>
+
+  <!-- Fonts -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- CSS -->
+
+  <link
+    rel="stylesheet"
+    href="admin.css"
+  >
+
 </head>
+
 <body>
 
-<div class="layout">
-  <aside class="sidebar">
-    <header class="sidebar-header">
-      <div class="sidebar-brand">
-        <img src="LSPULOGO3-removebg-preview.png" alt="LSPU Logo" class="sidebar-logo">
+  <div class="layout">
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="sidebar">
+
+      <header class="sidebar-header">
+
+        <div class="sidebar-brand">
+
+          <img
+            src="LSPULOGO3-removebg-preview.png"
+            alt="LSPU Logo"
+            class="sidebar-logo"
+          >
+
+          <div>
+
+            <h2>
+              BAO Storage
+            </h2>
+
+            <p class="sub">
+              Inventory Management
+            </p>
+
+          </div>
+
+        </div>
+
+      </header>
+
+      <!-- NAVIGATION -->
+
+      <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+
+          <i data-lucide="layout-dashboard"></i>
+
+          <span>Dashboard</span>
+
+        </a>
+
+        <a href="products.html">
+
+          <i data-lucide="package"></i>
+
+          <span>Products</span>
+
+        </a>
+
+        <a href="categories.html">
+
+          <i data-lucide="folder"></i>
+
+          <span>Categories</span>
+
+        </a>
+
+        <a href="transactions.html">
+
+          <i data-lucide="receipt"></i>
+
+          <span>Transactions</span>
+
+        </a>
+
+        <a
+          href="admin.html"
+          class="active"
+        >
+
+          <i data-lucide="shield"></i>
+
+          <span>User Management</span>
+
+        </a>
+
+        <a href="reports.html">
+
+          <i data-lucide="file-bar-chart"></i>
+
+          <span>Reports</span>
+
+        </a>
+
+      </nav>
+
+      <!-- FOOTER -->
+
+      <footer class="sidebar-footer">
+
+        <button
+          class="logout"
+          onclick="logout()"
+        >
+
+          <i data-lucide="log-out"></i>
+
+          <span>Logout</span>
+
+        </button>
+
+      </footer>
+
+    </aside>
+
+    <!-- =====================================
+         MAIN
+    ====================================== -->
+
+    <main class="main">
+
+      <!-- THEME TOGGLE -->
+
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle Theme"
+      >
+
+        <span id="themeIcon">
+
+          <i data-lucide="moon"></i>
+
+        </span>
+
+      </button>
+
+      <!-- TOPBAR -->
+
+      <div class="topbar">
+
         <div>
-          <h2>BAO Storage</h2>
-          <p class="sub">Inventory Management</p>
+
+          <h1>
+            User Management
+          </h1>
+
+          <p>
+            Manage user access and role permissions
+          </p>
+
         </div>
-      </div>
-    </header>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a href="products.html"><i data-lucide="package"></i><span>Products</span></a>
-      <a href="categories.html"><i data-lucide="folder"></i><span>Categories</span></a>
-      <a href="transactions.html"><i data-lucide="receipt"></i><span>Transactions</span></a>
-      <a href="admin.html" class="active"><i data-lucide="shield"></i><span>User Management</span></a>
-      <a href="reports.html"><i data-lucide="file-bar-chart"></i><span>Reports</span></a>
-    </nav>
+        <!-- ACTIONS -->
 
-    <footer class="sidebar-footer">
-      <button class="logout" onclick="logout()"><i data-lucide="log-out"></i><span>Logout</span></button>
-    </footer>
-  </aside>
+        <div class="topbar-actions">
 
-  <main class="main">
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">
-      <span id="themeIcon"><i data-lucide="moon"></i></span>
-    </button>
+          <button
+            class="refresh-btn"
+            onclick="refreshAll()"
+          >
 
-    <div class="topbar">
-      <div>
-        <h1>User Management</h1>
-        <p>Manage user access and role permissions</p>
-      </div>
-      <button class="add-btn" onclick="refreshAll()">Refresh Users</button>
-    </div>
+            <i data-lucide="refresh-cw"></i>
 
-    <div class="main-content">
-      <div class="stats">
-        <div class="card">
-          <p>Total Users</p>
-          <h3 id="totalUsers">0</h3>
+            <span>Refresh</span>
+
+          </button>
+
+          <button
+            class="add-btn"
+            onclick="openModal()"
+          >
+
+            <i data-lucide="user-plus"></i>
+
+            <span>Add User</span>
+
+          </button>
+
         </div>
-        <div class="card">
-          <p>Admin Users</p>
-          <h3 id="totalAdmins">0</h3>
+
+      </div>
+
+      <!-- CONTENT -->
+
+      <div class="main-content">
+
+        <!-- STATS -->
+
+        <div class="stats">
+
+          <div class="card">
+
+            <p>Total Users</p>
+
+            <h3 id="totalUsers">
+              0
+            </h3>
+
+          </div>
+
+          <div class="card">
+
+            <p>Admin Users</p>
+
+            <h3 id="totalAdmins">
+              0
+            </h3>
+
+          </div>
+
+          <div class="card">
+
+            <p>Regular Users</p>
+
+            <h3 id="totalStaff">
+              0
+            </h3>
+
+          </div>
+
         </div>
-        <div class="card">
-          <p>Regular Users</p>
-          <h3 id="totalStaff">0</h3>
+
+        <!-- SEARCH -->
+
+        <div class="controls">
+
+          <div class="search-box">
+
+            <i data-lucide="search"></i>
+
+            <input
+              id="userSearch"
+              type="text"
+              placeholder="Search users by name, email, or role"
+              oninput="renderUsers()"
+            >
+
+          </div>
+
         </div>
+
+        <!-- USERS TABLE -->
+
+        <div class="table-container">
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>Full Name</th>
+
+                <th>Email</th>
+
+                <th>Role</th>
+
+                <th>Created</th>
+
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="userTable"></tbody>
+
+          </table>
+
+        </div>
+
+        <!-- AUDIT LOGS -->
+
+        <div
+          class="table-container"
+          style="margin-top:20px;"
+        >
+
+          <div class="section-header">
+
+            <h3>
+
+              <i data-lucide="clipboard-list"></i>
+
+              Audit Logs
+
+            </h3>
+
+          </div>
+
+          <div
+            id="logList"
+            class="log-list"
+          ></div>
+
+        </div>
+
       </div>
 
-      <div class="controls" style="margin-bottom:12px;">
-        <input id="userSearch" type="text" placeholder="Search users by name or email" oninput="renderUsers()">
-      </div>
+    </main>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="userTable"></tbody>
-        </table>
-      </div>
-
-      <div class="table-container" style="margin-top:20px;">
-        <h3 style="padding:15px;">Audit Logs</h3>
-        <div id="logList" style="padding:15px; font-size:13px;"></div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h3 id="modalTitle">Add Profile</h3>
-    <input type="text" id="fullName" placeholder="Full Name">
-    <input type="email" id="email" placeholder="Email">
-    <select id="role">
-      <option value="regular_user">Regular User</option>
-      <option value="admin_user">Admin User</option>
-    </select>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveUser()">Save</button>
-    </div>
   </div>
-</div>
 
-<div id="toast"></div>
+  <!-- =====================================
+       CREATE USER MODAL
+  ====================================== -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app-auth.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="admin.js"></script>
-<script>
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    const isLight = savedTheme === "light";
-    if (isLight) document.body.classList.add("light-mode");
-    const icon = document.getElementById("themeIcon");
-    const toggle = document.getElementById("themeToggle");
-    function refreshThemeIcon(light) {
-      icon.innerHTML = light ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+  <div
+    id="modal"
+    class="modal"
+  >
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <h3 id="modalTitle">
+          Create User
+        </h3>
+
+        <button
+          class="close-icon"
+          onclick="closeModal()"
+        >
+
+          <i data-lucide="x"></i>
+
+        </button>
+
+      </div>
+
+      <!-- FORM -->
+
+      <div class="modal-form">
+
+        <!-- FULL NAME -->
+
+        <div class="form-group">
+
+          <label>
+            Full Name
+          </label>
+
+          <input
+            type="text"
+            id="fullName"
+            placeholder="Enter full name"
+          >
+
+        </div>
+
+        <!-- EMAIL -->
+
+        <div class="form-group">
+
+          <label>
+            Email Address
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter email"
+          >
+
+        </div>
+
+        <!-- PASSWORD -->
+
+        <div class="form-group">
+
+          <label>
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter password"
+          >
+
+        </div>
+
+        <!-- ROLE -->
+
+        <div class="form-group">
+
+          <label>
+            Role
+          </label>
+
+          <select id="role">
+
+            <option value="regular_user">
+              Regular User
+            </option>
+
+            <option value="admin_user">
+              Admin User
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-cancel"
+          onclick="closeModal()"
+        >
+
+          Cancel
+
+        </button>
+
+        <button
+          class="btn-save"
+          onclick="saveUser()"
+        >
+
+          Create User
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+
+  <div id="toast"></div>
+
+  <!-- SCRIPTS -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="app-auth.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="admin.js"></script>
+
+  <!-- THEME -->
+
+  <script>
+
+    (function(){
+
+      const savedTheme =
+        localStorage.getItem(
+          "theme"
+        );
+
+      const isLight =
+        savedTheme === "light";
+
+      if(isLight){
+
+        document.body.classList.add(
+          "light-mode"
+        );
+      }
+
+      const icon =
+        document.getElementById(
+          "themeIcon"
+        );
+
+      const toggle =
+        document.getElementById(
+          "themeToggle"
+        );
+
+      function refreshThemeIcon(light){
+
+        icon.innerHTML = light
+
+          ? '<i data-lucide="sun"></i>'
+
+          : '<i data-lucide="moon"></i>';
+
+        lucide.createIcons();
+      }
+
+      toggle.addEventListener(
+        "click",
+        function(){
+
+          document.body.classList.toggle(
+            "light-mode"
+          );
+
+          const light =
+            document.body.classList.contains(
+              "light-mode"
+            );
+
+          localStorage.setItem(
+            "theme",
+            light
+              ? "light"
+              : "dark"
+          );
+
+          refreshThemeIcon(light);
+        }
+      );
+
+      refreshThemeIcon(isLight);
+
       lucide.createIcons();
-    }
-    toggle.addEventListener("click", function() {
-      document.body.classList.toggle("light-mode");
-      const light = document.body.classList.contains("light-mode");
-      localStorage.setItem("theme", light ? "light" : "dark");
-      refreshThemeIcon(light);
-    });
-    refreshThemeIcon(isLight);
-  })();
-</script>
+
+    })();
+
+  </script>
+
 </body>
 </html>

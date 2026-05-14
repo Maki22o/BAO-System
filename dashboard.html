@@ -10,9 +10,12 @@
     content="width=device-width, initial-scale=1.0"
   />
 
-  <title>Dashboard | BAO Storage</title>
+  <title>
+    Dashboard | BAO Storage
+  </title>
 
-  <!-- GOOGLE FONT -->
+  <!-- Fonts -->
+
   <link
     rel="preconnect"
     href="https://fonts.googleapis.com"
@@ -29,22 +32,22 @@
     rel="stylesheet"
   />
 
-  <!-- DASHBOARD CSS -->
+  <!-- CSS -->
+
   <link
     rel="stylesheet"
     href="dashboard.css"
   />
 
-  <!-- CHART JS -->
+  <!-- Charts -->
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
 <body>
 
-  <!-- =====================================
-       MOBILE SIDEBAR OVERLAY
-  ====================================== -->
+  <!-- Sidebar overlay -->
 
   <div
     id="sidebarOverlay"
@@ -52,9 +55,7 @@
     onclick="toggleSidebar()"
   ></div>
 
-  <!-- =====================================
-       MOBILE MENU BUTTON
-  ====================================== -->
+  <!-- Mobile menu -->
 
   <button
     class="mobile-menu-btn"
@@ -66,22 +67,19 @@
 
   </button>
 
-  <!-- =====================================
-       MAIN LAYOUT
-  ====================================== -->
+  <!-- Layout -->
 
   <div class="layout">
 
-    <!-- =====================================
-         SIDEBAR
-    ====================================== -->
+    <!-- Sidebar -->
 
     <aside
       id="sidebar"
       class="sidebar"
     >
 
-      <!-- SIDEBAR HEADER -->
+      <!-- Brand -->
+
       <header class="sidebar-header">
 
         <div class="sidebar-brand">
@@ -94,7 +92,9 @@
 
           <div>
 
-            <h2>BAO Storage</h2>
+            <h2>
+              BAO Storage
+            </h2>
 
             <p class="sub">
               Inventory Management
@@ -106,7 +106,8 @@
 
       </header>
 
-      <!-- SIDEBAR NAV -->
+      <!-- Navigation -->
+
       <nav class="sidebar-nav">
 
         <a
@@ -162,7 +163,8 @@
 
       </nav>
 
-      <!-- SIDEBAR FOOTER -->
+      <!-- Footer -->
+
       <footer class="sidebar-footer">
 
         <button
@@ -180,22 +182,21 @@
 
     </aside>
 
-    <!-- =====================================
-         MAIN CONTENT
-    ====================================== -->
+    <!-- Main -->
 
     <main class="main">
 
-      <!-- =====================================
-           TOPBAR
-      ====================================== -->
+      <!-- Topbar -->
 
       <header class="topbar">
 
-        <!-- LEFT -->
+        <!-- Left -->
+
         <div class="topbar-left">
 
-          <h1>Dashboard</h1>
+          <h1>
+            Dashboard
+          </h1>
 
           <p>
             Welcome back! Here's what's happening
@@ -204,31 +205,38 @@
 
         </div>
 
-        <!-- RIGHT -->
+        <!-- Right -->
+
         <div class="topbar-right">
 
-          <!-- USER INFO -->
+          <!-- User -->
+
           <div class="user-box">
 
             <div class="user-avatar">
-              A
+
+              <span id="userInitial">
+                A
+              </span>
+
             </div>
 
             <div class="user-info">
 
               <h4 id="userName">
-                Administrator
+                User
               </h4>
 
-              <p id="userRoleLabel">
-                System Admin
+              <p id="userRole">
+                Regular User
               </p>
 
             </div>
 
           </div>
 
-          <!-- NOTIFICATIONS -->
+          <!-- Notifications -->
+
           <div class="notif-container">
 
             <button
@@ -248,7 +256,8 @@
 
             </button>
 
-            <!-- NOTIFICATION PANEL -->
+            <!-- Notification panel -->
+
             <div
               id="notifPanel"
               class="notif-panel"
@@ -256,7 +265,9 @@
 
               <div class="notif-header">
 
-                <h4>Notifications</h4>
+                <h4>
+                  Notifications
+                </h4>
 
                 <span
                   class="mark-read"
@@ -269,17 +280,16 @@
 
               <div class="notif-divider"></div>
 
-              <!-- DYNAMIC LIST -->
               <div
                 id="notifList"
                 class="notif-list"
-              >
-
-              </div>
+              ></div>
 
             </div>
 
           </div>
+
+          <!-- Theme -->
 
           <button
             id="themeToggle"
@@ -288,7 +298,9 @@
           >
 
             <span id="themeIcon">
+
               <i data-lucide="moon"></i>
+
             </span>
 
           </button>
@@ -297,15 +309,11 @@
 
       </header>
 
-      <!-- =====================================
-           MAIN CONTENT SCROLL AREA
-      ====================================== -->
+      <!-- Main content -->
 
       <div class="main-content">
 
-        <!-- =====================================
-             STATS
-        ====================================== -->
+        <!-- Stats -->
 
         <section class="stats">
 
@@ -371,9 +379,7 @@
 
         </section>
 
-        <!-- =====================================
-             CHARTS
-        ====================================== -->
+        <!-- Charts -->
 
         <section class="grid">
 
@@ -399,9 +405,7 @@
 
         </section>
 
-        <!-- =====================================
-             EXTRA PANELS
-        ====================================== -->
+        <!-- Extra -->
 
         <section class="grid">
 
@@ -440,28 +444,15 @@
 
   </div>
 
-  <!-- =====================================
-       SUPABASE CDN
-  ====================================== -->
+  <!-- Scripts -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app-auth.js"></script>
 
-  <!-- =====================================
-       LUCIDE ICONS
-  ====================================== -->
+  <script src="app-auth.js"></script>
 
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- =====================================
-       DASHBOARD SCRIPT
-  ====================================== -->
-
   <script src="dashboard.js"></script>
-
-  <!-- =====================================
-       INITIALIZE ICONS
-  ====================================== -->
 
   <script>
     lucide.createIcons();

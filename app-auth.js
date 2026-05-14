@@ -1,124 +1,342 @@
-const APP_SUPABASE_URL = "https://dpdchbusvfktlqjaxdlb.supabase.co";
-const APP_SUPABASE_KEY = "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+const APP_SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-if (!window.appSupabase) {
-  window.appSupabase = supabase.createClient(APP_SUPABASE_URL, APP_SUPABASE_KEY);
+const APP_SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+
+// Supabase
+
+if(!window.appSupabase){
+
+  window.appSupabase =
+    supabase.createClient(
+
+      APP_SUPABASE_URL,
+
+      APP_SUPABASE_KEY
+    );
 }
+
+// Global state
 
 window.appAuth = {
+
   user: null,
+
   profile: null,
-  role: "regular_user"
+
+  role: "regular_user",
+
+  roleLabel: "Regular User"
 };
 
-function mapRoleLabel(role) {
-  if (role === "admin_user") return "System Admin";
-  return "Regular User";
+// Role label
+
+function mapRoleLabel(role){
+
+  return role === "admin_user"
+
+    ? "System Admin"
+
+    : "Regular User";
 }
 
-function isAdminRole(role) {
+// Role check
+
+function isAdminRole(role){
+
   return role === "admin_user";
 }
 
-async function fetchProfileWithFallback(user) {
-  const client = window.appSupabase;
-  let { data, error } = await client
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+// Current page
 
-  if (error) {
-    console.error("[RBAC:fetchProfile]", error);
+function currentPageIsAdmin(){
+
+  return window.location.pathname
+    .toLowerCase()
+    .includes("admin.html");
+}
+
+// Create missing profile
+
+async function createProfile(user){
+
+  const payload = {
+
+    id:
+      user.id,
+
+    fullname:
+
+      user.user_metadata?.fullname ||
+
+      user.user_metadata?.full_name ||
+
+      "Unnamed User",
+
+    email:
+      user.email ||
+
+      null,
+
+    role:
+      "regular_user",
+
+    avatar_url:
+
+      user.user_metadata?.avatar_url ||
+
+      null
+  };
+
+  const { data, error } =
+    await window.appSupabase
+
+      .from("profiles")
+
+      .upsert([payload])
+
+      .select()
+
+      .single();
+
+  if(error){
+
+    console.error(
+      "[RBAC:createProfile]",
+      error
+    );
+
     return null;
-  }
-
-  if (!data) {
-    const basePayload = {
-      id: user.id,
-      email: user.email ?? null,
-      avatar_url: user.user_metadata?.avatar_url ?? null,
-      role: "regular_user"
-    };
-
-    const fullName =
-      user.user_metadata?.fullname ??
-      user.user_metadata?.full_name ??
-      null;
-
-    const payloads = [
-      { ...basePayload, fullname: fullName },
-      { ...basePayload, full_name: fullName }
-    ];
-
-    let created = null;
-    let lastError = null;
-    for (const payload of payloads) {
-      const res =
-        await client.from("profiles")
-          .insert([payload])
-          .select("*")
-          .maybeSingle();
-
-      if (!res.error) {
-        created = res.data;
-        break;
-      }
-
-      lastError = res.error;
-    }
-
-    if (!created) {
-      console.error("[RBAC:createProfile]", lastError);
-      return null;
-    }
-
-    data = created;
   }
 
   return data;
 }
 
-function applyRoleBasedNav(role) {
-  const adminLinks = document.querySelectorAll('a[href="admin.html"]');
-  const isAdmin = isAdminRole(role);
-  adminLinks.forEach((link) => {
-    link.style.display = isAdmin ? "" : "none";
+// Fetch profile
+
+async function fetchProfile(user){
+
+  const { data, error } =
+    await window.appSupabase
+
+      .from("profiles")
+
+      .select("*")
+
+      .eq("id", user.id)
+
+      .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "[RBAC:fetchProfile]",
+      error
+    );
+
+    return null;
+  }
+
+  // Auto-create profile
+
+  if(!data){
+
+    return await createProfile(
+      user
+    );
+  }
+
+  // Sync email
+
+  if(
+    !data.email &&
+    user.email
+  ){
+
+    await window.appSupabase
+
+      .from("profiles")
+
+      .update({
+
+        email:
+          user.email
+      })
+
+      .eq("id", user.id);
+
+    data.email =
+      user.email;
+  }
+
+  return data;
+}
+
+// Apply nav permissions
+
+function applyRoleBasedNav(role){
+
+  const adminLinks =
+    document.querySelectorAll(
+      'a[href="admin.html"]'
+    );
+
+  const isAdmin =
+    isAdminRole(role);
+
+  adminLinks.forEach(link => {
+
+    link.style.display =
+
+      isAdmin
+        ? ""
+        : "none";
   });
 }
 
-function currentPageIsAdmin() {
-  return window.location.pathname.toLowerCase().includes("admin.html");
+// Apply user info
+
+function applyUserInfo(){
+
+  const fullName =
+
+    window.appAuth.profile
+      ?.fullname ||
+
+    window.appAuth.user
+      ?.email ||
+
+    "User";
+
+  const roleLabel =
+    window.appAuth.roleLabel;
+
+  // Name
+
+  document.querySelectorAll(
+    "#userName"
+  ).forEach(el => {
+
+    el.innerText =
+      fullName;
+  });
+
+  // Role
+
+  document.querySelectorAll(
+    "#userRole"
+  ).forEach(el => {
+
+    el.innerText =
+      roleLabel;
+  });
+
+  // Avatar
+
+  document.querySelectorAll(
+    "#userInitial"
+  ).forEach(el => {
+
+    el.innerText =
+
+      String(fullName)
+        .trim()
+        .charAt(0)
+        .toUpperCase();
+  });
 }
 
-async function initProtectedPageAuth() {
-  const client = window.appSupabase;
-  const { data, error } = await client.auth.getSession();
+// Protected auth
 
-  if (error || !data?.session?.user) {
-    window.location.href = "index.html";
+async function initProtectedPageAuth(){
+
+  const client =
+    window.appSupabase;
+
+  const { data, error } =
+    await client.auth.getSession();
+
+  if(
+    error ||
+    !data?.session?.user
+  ){
+
+    window.location.href =
+      "index.html";
+
     return false;
   }
 
-  const user = data.session.user;
-  const profile = await fetchProfileWithFallback(user);
-  const role = profile?.role || "regular_user";
+  const user =
+    data.session.user;
 
-  window.appAuth.user = user;
-  window.appAuth.profile = profile;
-  window.appAuth.role = role;
-  window.appAuth.roleLabel = mapRoleLabel(role);
+  const profile =
+    await fetchProfile(user);
+
+  const role =
+
+    profile?.role ||
+
+    "regular_user";
+
+  // Save state
+
+  window.appAuth.user =
+    user;
+
+  window.appAuth.profile =
+    profile;
+
+  window.appAuth.role =
+    role;
+
+  window.appAuth.roleLabel =
+    mapRoleLabel(role);
+
+  // Apply UI
 
   applyRoleBasedNav(role);
 
-  if (currentPageIsAdmin() && !isAdminRole(role)) {
-    window.location.href = "dashboard.html";
+  applyUserInfo();
+
+  // Admin protection
+
+  if(
+    currentPageIsAdmin() &&
+    !isAdminRole(role)
+  ){
+
+    window.location.href =
+      "dashboard.html";
+
     return false;
   }
 
   return true;
 }
 
-window.initProtectedPageAuth = initProtectedPageAuth;
-window.mapRoleLabel = mapRoleLabel;
-window.isAdminRole = isAdminRole;
+// Logout
+
+async function logout(){
+
+  await window.appSupabase.auth
+    .signOut();
+
+  window.location.href =
+    "index.html";
+}
+
+// Exports
+
+window.initProtectedPageAuth =
+  initProtectedPageAuth;
+
+window.mapRoleLabel =
+  mapRoleLabel;
+
+window.isAdminRole =
+  isAdminRole;
+
+window.logout =
+  logout;

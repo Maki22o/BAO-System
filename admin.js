@@ -1,253 +1,771 @@
 let profiles = [];
+
 let logs = [];
+
 let editId = null;
 
-function logSupabaseError(stage, error, context = {}) {
-  console.error(`[UserManagement:${stage}]`, {
-    message: error?.message,
-    details: error?.details,
-    hint: error?.hint,
-    code: error?.code,
-    status: error?.status,
-    context
-  });
+// Role label
+
+function roleLabel(role){
+
+  return role === "admin_user"
+
+    ? "System Admin"
+
+    : "Regular User";
 }
 
-function roleLabel(role) {
-  return role === "admin_user" ? "System Admin" : "Regular User";
+// Badge
+
+function roleBadgeClass(role){
+
+  return role === "admin_user"
+
+    ? "admin"
+
+    : "staff";
 }
 
-function roleBadgeClass(role) {
-  return role === "admin_user" ? "admin" : "staff";
+// Toast
+
+function showToast(message){
+
+  const toast =
+    document.getElementById(
+      "toast"
+    );
+
+  if(!toast) return;
+
+  toast.innerText =
+    message;
+
+  toast.style.display =
+    "block";
+
+  setTimeout(() => {
+
+    toast.style.display =
+      "none";
+
+  }, 2300);
 }
 
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.innerText = msg;
-  toast.style.display = "block";
-  setTimeout(() => (toast.style.display = "none"), 2300);
+// Logout
+
+async function logout(){
+
+  await window.appSupabase.auth
+    .signOut();
+
+  window.location.href =
+    "index.html";
 }
 
-async function logout() {
-  await window.appSupabase.auth.signOut();
-  window.location.href = "index.html";
+// Open modal
+
+function openModal(){
+
+  editId = null;
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Create User";
+
+  document.getElementById(
+    "fullName"
+  ).value = "";
+
+  document.getElementById(
+    "email"
+  ).value = "";
+
+  document.getElementById(
+    "password"
+  ).value = "";
+
+  document.getElementById(
+    "role"
+  ).value =
+    "regular_user";
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
 }
 
-function openModal() {
-  document.getElementById("modal").style.display = "flex";
-  if (!editId) {
-    document.getElementById("modalTitle").innerText = "Add Profile";
-    document.getElementById("fullName").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("role").value = "regular_user";
+// Close modal
+
+function closeModal(){
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "none";
+}
+
+// Logs
+
+async function addLog(text){
+
+  try{
+
+    await window.appSupabase
+
+      .from("logs")
+
+      .insert([{
+
+        created_by:
+          window.appAuth.user.id,
+
+        text
+      }]);
+
+  }catch(error){
+
+    console.error(error);
   }
 }
 
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
+// Fetch logs
 
-async function addLog(text) {
-  const payload = {
-    created_by: window.appAuth.user.id,
-    text
-  };
-  const { error } = await window.appSupabase.from("logs").insert([payload]);
-  if (error) logSupabaseError("addLog", error, { text });
-}
+async function fetchLogs(){
 
-async function fetchLogs() {
-  const { data, error } = await window.appSupabase
-    .from("logs")
-    .select("*")
-    .eq("created_by", window.appAuth.user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { data, error } =
+    await window.appSupabase
 
-  if (error) {
-    logSupabaseError("fetchLogs", error);
+      .from("logs")
+
+      .select("*")
+
+      .order("created_at", {
+
+        ascending: false
+      })
+
+      .limit(50);
+
+  if(error){
+
+    console.error(error);
+
     logs = [];
+
     return;
   }
+
   logs = data || [];
 }
 
-function renderLogs() {
-  const logList = document.getElementById("logList");
-  if (!logList) return;
-  logList.innerHTML = logs
-    .map((l) => `<p>${l.text || l.message || ""} <br><small>${new Date(l.created_at || l.time || Date.now()).toLocaleString()}</small></p>`)
-    .join("");
+// Render logs
+
+function renderLogs(){
+
+  const container =
+    document.getElementById(
+      "logList"
+    );
+
+  if(!container) return;
+
+  container.innerHTML =
+
+    logs.map(log => `
+
+      <p>
+
+        ${log.text}
+
+        <br>
+
+        <small>
+
+          ${
+            new Date(
+              log.created_at
+            ).toLocaleString()
+          }
+
+        </small>
+
+      </p>
+
+    `).join("");
 }
 
-async function fetchProfiles() {
-  const { data, error } = await window.appSupabase
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+// Fetch users
 
-  if (error) {
-    logSupabaseError("fetchProfiles", error);
+async function fetchProfiles(){
+
+  const { data, error } =
+    await window.appSupabase
+
+      .from("profiles")
+
+      .select("*")
+
+      .order("created_at", {
+
+        ascending: false
+      });
+
+  if(error){
+
+    console.error(error);
+
     profiles = [];
-    showToast("Unable to load users");
+
+    showToast(
+      "Unable to load users"
+    );
+
     return;
   }
+
   profiles = data || [];
 }
 
-function updateStats() {
-  const total = profiles.length;
-  const admins = profiles.filter((p) => p.role === "admin_user").length;
-  const regular = total - admins;
-  document.getElementById("totalUsers").innerText = total;
-  document.getElementById("totalAdmins").innerText = admins;
-  document.getElementById("totalStaff").innerText = regular;
+// Stats
+
+function updateStats(){
+
+  const total =
+    profiles.length;
+
+  const admins =
+    profiles.filter(profile =>
+
+      profile.role ===
+      "admin_user"
+
+    ).length;
+
+  const regular =
+    total - admins;
+
+  document.getElementById(
+    "totalUsers"
+  ).innerText =
+    total;
+
+  document.getElementById(
+    "totalAdmins"
+  ).innerText =
+    admins;
+
+  document.getElementById(
+    "totalStaff"
+  ).innerText =
+    regular;
 }
 
-function renderUsers() {
-  const table = document.getElementById("userTable");
-  const query = (document.getElementById("userSearch")?.value || "").toLowerCase();
-  if (!table) return;
+// Render users
+
+function renderUsers(){
+
+  const table =
+    document.getElementById(
+      "userTable"
+    );
+
+  if(!table) return;
+
+  const query =
+
+    (
+      document.getElementById(
+        "userSearch"
+      )?.value || ""
+    ).toLowerCase();
+
   table.innerHTML = "";
 
-  const filtered = profiles.filter((p) => {
-    const fullName = (p.fullname || p.full_name || "").toLowerCase();
-    const email = (p.email || "").toLowerCase();
-    return fullName.includes(query) || email.includes(query);
-  });
+  const filtered =
+    profiles.filter(profile => {
 
-  filtered.forEach((p) => {
+      const fullName =
+        (
+          profile.fullname || ""
+        ).toLowerCase();
+
+      const email =
+        (
+          profile.email || ""
+        ).toLowerCase();
+
+      const role =
+        (
+          profile.role || ""
+        ).toLowerCase();
+
+      return (
+
+        fullName.includes(query) ||
+
+        email.includes(query) ||
+
+        role.includes(query)
+      );
+    });
+
+  filtered.forEach(profile => {
+
     table.innerHTML += `
+
       <tr>
-        <td>${p.fullname || p.full_name || "-"}</td>
-        <td>${p.email || "-"}</td>
-        <td><span class="badge ${roleBadgeClass(p.role)}">${roleLabel(p.role)}</span></td>
-        <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : "-"}</td>
-        <td class="actions">
-          <button class="edit" onclick="editUser('${p.id}')">Edit</button>
-          <button onclick="toggleRole('${p.id}')">Toggle Role</button>
-          <button class="delete" onclick="deleteUser('${p.id}')">Delete</button>
+
+        <td>
+
+          ${profile.fullname || "-"}
+
         </td>
+
+        <td>
+
+          ${profile.email || "-"}
+
+        </td>
+
+        <td>
+
+          <span class="badge ${roleBadgeClass(profile.role)}">
+
+            ${roleLabel(profile.role)}
+
+          </span>
+
+        </td>
+
+        <td>
+
+          ${
+            profile.created_at
+
+            ? new Date(
+                profile.created_at
+              ).toLocaleDateString()
+
+            : "-"
+          }
+
+        </td>
+
+        <td class="actions">
+
+          <button
+            class="edit"
+            onclick="editUser('${profile.id}')"
+          >
+
+            Edit
+
+          </button>
+
+          <button
+            onclick="toggleRole('${profile.id}')"
+          >
+
+            Toggle Role
+
+          </button>
+
+          <button
+            class="delete"
+            onclick="deleteUser('${profile.id}')"
+          >
+
+            Delete
+
+          </button>
+
+        </td>
+
       </tr>
     `;
   });
 
   updateStats();
+
   renderLogs();
 }
 
-function editUser(id) {
-  const profile = profiles.find((p) => String(p.id) === String(id));
-  if (!profile) return;
+// Edit
+
+function editUser(id){
+
+  const profile =
+    profiles.find(profile =>
+
+      String(profile.id) ===
+      String(id)
+    );
+
+  if(!profile) return;
+
   editId = profile.id;
-  document.getElementById("modalTitle").innerText = "Edit Profile";
-  document.getElementById("fullName").value = profile.fullname || profile.full_name || "";
-  document.getElementById("email").value = profile.email || "";
-  document.getElementById("role").value = profile.role || "regular_user";
-  openModal();
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Edit User";
+
+  document.getElementById(
+    "fullName"
+  ).value =
+    profile.fullname || "";
+
+  document.getElementById(
+    "email"
+  ).value =
+    profile.email || "";
+
+  document.getElementById(
+    "password"
+  ).value = "";
+
+  document.getElementById(
+    "role"
+  ).value =
+    profile.role;
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
 }
 
-async function saveUser() {
-  const fullName = document.getElementById("fullName").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const role = document.getElementById("role").value;
+// Save
 
-  if (!fullName || !email) {
-    showToast("Fill all fields");
-    return;
+async function saveUser(){
+
+  const fullName =
+    document.getElementById(
+      "fullName"
+    ).value.trim();
+
+  const email =
+    document.getElementById(
+      "email"
+    ).value.trim();
+
+  const password =
+    document.getElementById(
+      "password"
+    ).value.trim();
+
+  const role =
+    document.getElementById(
+      "role"
+    ).value;
+
+  if(
+    !fullName ||
+    !email
+  ){
+
+    return showToast(
+      "Fill all fields"
+    );
   }
 
-  try {
-    if (editId) {
-      let result =
+  // Edit existing
+
+  if(editId){
+
+    try{
+
+      const { error } =
         await window.appSupabase
+
           .from("profiles")
+
           .update({
-            fullname: fullName,
+
+            fullname:
+              fullName,
+
             email,
+
             role
           })
+
           .eq("id", editId);
 
-      if(result.error){
-        result =
-          await window.appSupabase
-            .from("profiles")
-            .update({
-              full_name: fullName,
-              email,
-              role
-            })
-            .eq("id", editId);
-      }
+      if(error) throw error;
 
-      if (result.error) throw result.error;
-      await addLog(`Updated profile: ${email}`);
-      showToast("Profile updated");
-    } else {
-      showToast("Select a user row to edit");
+      await addLog(
+
+        `Updated user: ${email}`
+      );
+
+      showToast(
+        "User updated"
+      );
+
+      editId = null;
+
+      closeModal();
+
+      await refreshAll();
+
+      return;
+
+    }catch(error){
+
+      console.error(error);
+
+      showToast(
+        "Unable to update user"
+      );
+
       return;
     }
+  }
 
-    editId = null;
+  // Create new user
+
+  if(password.length < 6){
+
+    return showToast(
+      "Password must be at least 6 characters"
+    );
+  }
+
+  try{
+
+    // Register user
+
+    const { data, error } =
+
+      await window.appSupabase.auth
+        .signUp({
+
+          email,
+          password,
+
+          options: {
+
+            data: {
+
+              fullname:
+                fullName
+            }
+          }
+        });
+
+    if(error) throw error;
+
+    const userId =
+      data?.user?.id;
+
+    if(!userId){
+
+      throw new Error(
+        "Unable to create user"
+      );
+    }
+
+    // Update role
+
+    const { error:profileError } =
+
+      await window.appSupabase
+
+        .from("profiles")
+
+        .upsert([{
+
+          id: userId,
+
+          fullname:
+            fullName,
+
+          email,
+
+          role
+        }]);
+
+    if(profileError)
+      throw profileError;
+
+    await addLog(
+
+      `Created user: ${email}`
+    );
+
+    showToast(
+      "User created"
+    );
+
     closeModal();
+
     await refreshAll();
-  } catch (error) {
-    logSupabaseError("saveUser", error, { editId, email, role });
-    showToast(error?.message ? `Unable to save: ${error.message}` : "Unable to save profile");
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+
+      error?.message ||
+
+      "Unable to create user"
+    );
   }
 }
 
-async function toggleRole(id) {
-  const profile = profiles.find((p) => String(p.id) === String(id));
-  if (!profile) return;
-  const nextRole = profile.role === "admin_user" ? "regular_user" : "admin_user";
+// Toggle role
 
-  try {
-    const { error } = await window.appSupabase
-      .from("profiles")
-      .update({ role: nextRole })
-      .eq("id", id);
-    if (error) throw error;
-    await addLog(`Changed role for ${profile.email} to ${roleLabel(nextRole)}`);
-    showToast("Role updated");
+async function toggleRole(id){
+
+  const profile =
+    profiles.find(profile =>
+
+      String(profile.id) ===
+      String(id)
+    );
+
+  if(!profile) return;
+
+  const nextRole =
+
+    profile.role ===
+    "admin_user"
+
+    ? "regular_user"
+
+    : "admin_user";
+
+  try{
+
+    const { error } =
+      await window.appSupabase
+
+        .from("profiles")
+
+        .update({
+
+          role: nextRole
+        })
+
+        .eq("id", id);
+
+    if(error) throw error;
+
+    await addLog(
+
+      `Changed role for ${profile.email}`
+    );
+
+    showToast(
+      "Role updated"
+    );
+
     await refreshAll();
-  } catch (error) {
-    logSupabaseError("toggleRole", error, { id, nextRole });
-    showToast("Unable to update role");
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to update role"
+    );
   }
 }
 
-async function deleteUser(id) {
-  const profile = profiles.find((p) => String(p.id) === String(id));
-  if (!profile) return;
-  if (!confirm(`Delete profile for ${profile.email}?`)) return;
+// Delete
 
-  try {
-    const { error } = await window.appSupabase.from("profiles").delete().eq("id", id);
-    if (error) throw error;
-    await addLog(`Deleted profile: ${profile.email}`);
-    showToast("Profile deleted");
+async function deleteUser(id){
+
+  const profile =
+    profiles.find(profile =>
+
+      String(profile.id) ===
+      String(id)
+    );
+
+  if(!profile) return;
+
+  if(!confirm(
+
+    `Delete profile for ${profile.email}?`
+
+  )) return;
+
+  try{
+
+    const { error } =
+      await window.appSupabase
+
+        .from("profiles")
+
+        .delete()
+
+        .eq("id", id);
+
+    if(error) throw error;
+
+    await addLog(
+
+      `Deleted profile: ${profile.email}`
+    );
+
+    showToast(
+      "Profile deleted"
+    );
+
     await refreshAll();
-  } catch (error) {
-    logSupabaseError("deleteUser", error, { id });
-    showToast("Unable to delete profile");
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to delete profile"
+    );
   }
 }
 
-async function refreshAll() {
+// Refresh
+
+async function refreshAll(){
+
   await fetchProfiles();
+
   await fetchLogs();
+
   renderUsers();
 }
 
-window.addEventListener("load", async () => {
-  const ok = await window.initProtectedPageAuth();
-  if (!ok) return;
-  if (!window.isAdminRole(window.appAuth.role)) {
-    window.location.href = "dashboard.html";
-    return;
+// Init
+
+window.addEventListener(
+  "load",
+  async () => {
+
+    const ok =
+      await window
+        .initProtectedPageAuth();
+
+    if(!ok) return;
+
+    if(
+      !window.isAdminRole(
+        window.appAuth.role
+      )
+    ){
+
+      window.location.href =
+        "dashboard.html";
+
+      return;
+    }
+
+    await refreshAll();
+
+    lucide.createIcons();
   }
-  await refreshAll();
-});
+);

@@ -18,9 +18,35 @@ let products = [];
 
 let editingCategoryId = null;
 
+// Toast
+
+function showToast(message){
+
+  const toast =
+    document.getElementById(
+      "toast"
+    );
+
+  if(!toast) return;
+
+  toast.innerText =
+    message;
+
+  toast.style.display =
+    "block";
+
+  setTimeout(() => {
+
+    toast.style.display =
+      "none";
+
+  }, 2300);
+}
+
 // Auth
 
 async function checkAuth(){
+
   const ok =
     await window
       .initProtectedPageAuth();
@@ -31,26 +57,6 @@ async function checkAuth(){
     window.appAuth.user;
 
   return true;
-}
-
-// Toast
-
-function showToast(message){
-
-  const toast =
-    document.getElementById("toast");
-
-  if(!toast) return;
-
-  toast.innerText = message;
-
-  toast.style.display = "block";
-
-  setTimeout(() => {
-
-    toast.style.display = "none";
-
-  }, 2300);
 }
 
 // Fetch categories
@@ -76,6 +82,8 @@ async function fetchCategories(){
     showToast(
       "Unable to load categories"
     );
+
+    categories = [];
 
     return;
   }
@@ -248,7 +256,7 @@ function viewCategory(categoryId){
     "products.html";
 }
 
-// Edit category
+// Edit
 
 function edit(id){
 
@@ -280,7 +288,7 @@ function edit(id){
     "flex";
 }
 
-// Create category
+// Create
 
 async function createCategory(name){
 
@@ -291,7 +299,10 @@ async function createCategory(name){
 
       .insert([{
 
-        name
+        name,
+
+        created_by:
+          currentUser.id
       }]);
 
   if(error){
@@ -302,7 +313,7 @@ async function createCategory(name){
   }
 }
 
-// Update category
+// Update
 
 async function updateCategory(id, name){
 
@@ -326,7 +337,7 @@ async function updateCategory(id, name){
   }
 }
 
-// Save category
+// Save
 
 async function saveCategory(){
 
@@ -394,6 +405,7 @@ async function saveCategory(){
     console.error(error);
 
     showToast(
+
       error?.message ||
 
       "Unable to save category"
@@ -401,7 +413,7 @@ async function saveCategory(){
   }
 }
 
-// Delete category
+// Delete
 
 async function del(id){
 
@@ -461,7 +473,8 @@ async function del(id){
 
 async function logout(){
 
-  await supabaseClient.auth.signOut();
+  await supabaseClient.auth
+    .signOut();
 
   window.location.href =
     "index.html";
@@ -490,5 +503,7 @@ window.addEventListener(
     if(!ok) return;
 
     await refreshData();
+
+    lucide.createIcons();
   }
 );
