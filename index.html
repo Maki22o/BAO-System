@@ -1,79 +1,297 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BAO Storage System</title>
-<link rel="stylesheet" href="style.css">
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>BAO Storage System</title>
+
+  <!-- GOOGLE FONT -->
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+  <link
+    rel="stylesheet"
+    href="style.css"
+  />
+
 </head>
+
 <body>
 
-<div class="bg-shapes">
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
+  <!-- =====================================
+       THEME TOGGLE
+  ====================================== -->
 
-<div class="wrapper">
-  <div class="card">
+  <button
+    id="themeToggle"
+    class="theme-toggle"
+    aria-label="Toggle Theme"
+  >
 
-    <h2>Welcome back</h2>
-    <p class="subtitle">Please enter your details</p>
+    <span id="themeIcon">
 
-    <!-- ✅ FORM AUTOCOMPLETE FIX -->
-    <div class="form" autocomplete="off">
+      <i data-lucide="moon"></i>
 
-      <div class="form-group">
-        <!-- ✅ placeholder=" " fixes floating label -->
-        <input type="email" id="loginEmail" required placeholder=" " autocomplete="email">
-        <label>Email Address</label>
+    </span>
+
+  </button>
+
+  <!-- =====================================
+       BACKGROUND
+  ====================================== -->
+
+  <div class="background-overlay"></div>
+
+  <!-- =====================================
+       MAIN CONTAINER
+  ====================================== -->
+
+  <main class="container">
+
+    <!-- =====================================
+         LEFT PANEL
+    ====================================== -->
+
+    <section class="left-panel">
+
+      <div class="branding">
+
+        <!-- BRAND TOP -->
+        <div class="brand-top">
+
+          <img
+            src="LSPULOGO3-removebg-preview.png"
+            class="brand-logo"
+            alt="LSPU Logo"
+          />
+
+          <span class="system-badge">
+            Laguna State Polytechnic University
+          </span>
+
+        </div>
+
+        <!-- TITLE -->
+        <h1>
+          BAO Storage
+          Management
+          System
+        </h1>
+
+        <!-- DESCRIPTION -->
+        <p>
+          Securely manage, organize, and monitor institutional records
+          with a centralized digital storage platform.
+        </p>
+
       </div>
 
-      <div class="form-group">
-        <input type="password" id="loginPassword" required placeholder=" " autocomplete="current-password">
-        <label>Password</label>
-        <span class="toggle" onclick="togglePassword('loginPassword')">👁</span>
+    </section>
+
+    <!-- =====================================
+         RIGHT PANEL
+    ====================================== -->
+
+    <section class="right-panel">
+
+      <div class="login-card">
+
+        <!-- LOGIN HEADER -->
+        <div class="login-header">
+
+          <h2>Welcome Back</h2>
+
+          <p>
+            Sign in to continue to your account
+          </p>
+
+        </div>
+
+        <!-- FORM -->
+        <div class="form">
+
+          <!-- EMAIL -->
+          <div class="form-group">
+
+            <input
+              type="email"
+              id="loginEmail"
+              required
+              placeholder=" "
+              autocomplete="email"
+            />
+
+            <label>Email Address</label>
+
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="form-group">
+
+            <input
+              type="password"
+              id="loginPassword"
+              required
+              placeholder=" "
+              autocomplete="current-password"
+            />
+
+            <label>Password</label>
+
+            <span
+              class="toggle"
+              onclick="togglePassword('loginPassword')"
+            >
+
+              <i data-lucide="eye"></i>
+
+            </span>
+
+          </div>
+
+          <!-- OPTIONS -->
+          <div class="form-options">
+
+            <label class="remember">
+
+              <input
+                type="checkbox"
+                id="rememberMe"
+              />
+
+              <span>Remember me</span>
+
+            </label>
+
+            <a
+              href="#"
+              onclick="event.preventDefault(); openModal();"
+            >
+              Forgot Password?
+            </a>
+
+          </div>
+
+          <!-- BUTTON -->
+          <button
+            class="login-btn"
+            onclick="login(this)"
+          >
+            Sign In
+          </button>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="bottom-text">
+
+          Don’t have an account?
+          <a href="register.html">
+            Create account
+          </a>
+
+        </div>
+
       </div>
 
-      <div class="form-row">
+    </section>
 
-        <label class="remember">
-          <input type="checkbox" id="rememberMe">
-          <span>Remember me</span>
-        </label>
+  </main>
 
-        <!-- ✅ PREVENT PAGE JUMP -->
-        <a href="#" class="forgot" onclick="event.preventDefault(); openModal();">
-          Forgot password?
-        </a>
+  <!-- =====================================
+       RESET PASSWORD MODAL
+  ====================================== -->
+
+  <div
+    id="modal"
+    class="modal"
+  >
+
+    <div class="modal-content">
+
+      <h3>Reset Password</h3>
+
+      <p>
+        Enter your email address to receive reset instructions.
+      </p>
+
+      <input
+        type="email"
+        id="resetEmail"
+        placeholder="Enter your email"
+      />
+
+      <div class="modal-buttons">
+
+        <button onclick="sendReset()">
+          Send Link
+        </button>
+
+        <button
+          class="close-btn"
+          onclick="closeModal()"
+        >
+          Cancel
+        </button>
 
       </div>
-
-      <button class="btn" onclick="login(this)">Sign In</button>
 
     </div>
 
-    <p class="bottom-text">
-      Don’t have an account? <a href="register.html">Create an account</a>
-    </p>
-
   </div>
-</div>
 
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h3>Reset Password</h3>
-    <p>Enter your email to receive reset instructions</p>
+  <!-- =====================================
+       TOAST
+  ====================================== -->
 
-    <input type="email" id="resetEmail" placeholder="Enter your email" autocomplete="email">
+  <div id="toast"></div>
 
-    <button onclick="sendReset()">Send Link</button>
-    <button class="close-btn" onclick="closeModal()">Cancel</button>
-  </div>
-</div>
+  <!-- =====================================
+       SUPABASE CDN
+  ====================================== -->
 
-<div id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="script.js"></script>
+  <!-- =====================================
+       LUCIDE ICONS
+  ====================================== -->
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- =====================================
+       SCRIPT
+  ====================================== -->
+
+  <script src="script.js"></script>
+
+  <!-- =====================================
+       INITIALIZE ICONS
+  ====================================== -->
+
+  <script>
+    lucide.createIcons();
+  </script>
+
 </body>
 </html>

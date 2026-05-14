@@ -1,63 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Create Account</title>
-<link rel="stylesheet" href="style.css">
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Create Account | BAO Storage System</title>
+
+  <!-- GOOGLE FONT -->
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+  <link
+    rel="stylesheet"
+    href="style.css"
+  />
+
 </head>
+
 <body>
 
+  <!-- =====================================
+       THEME TOGGLE
+  ====================================== -->
 
-<div class="bg-shapes">
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
+  <button
+    id="themeToggle"
+    class="theme-toggle"
+    aria-label="Toggle Theme"
+  >
 
-<div class="wrapper">
-  <div class="card">
+    <span id="themeIcon">
 
-    <h2>Create account</h2>
-    <p class="subtitle">Start managing your storage</p>
+      <i data-lucide="moon"></i>
 
-    <div class="form">
+    </span>
 
-      <div class="form-group">
-        <input type="text" id="regName" required>
-        <label>Full Name</label>
+  </button>
+
+  <!-- =====================================
+       BACKGROUND
+  ====================================== -->
+
+  <div class="background-overlay"></div>
+
+  <!-- =====================================
+       MAIN CONTAINER
+  ====================================== -->
+
+  <main class="container">
+
+    <!-- =====================================
+         LEFT PANEL
+    ====================================== -->
+
+    <section class="left-panel">
+
+      <div class="branding">
+
+        <!-- BRAND TOP -->
+        <div class="brand-top">
+
+          <img
+            src="LSPULOGO3-removebg-preview.png"
+            class="brand-logo"
+            alt="LSPU Logo"
+          />
+
+          <span class="system-badge">
+            Laguna State Polytechnic University
+          </span>
+
+        </div>
+
+        <!-- TITLE -->
+        <h1>
+          BAO Storage
+          Management
+          System
+        </h1>
+
+        <!-- DESCRIPTION -->
+        <p>
+          Create your account to securely access and manage institutional
+          storage records within the centralized platform.
+        </p>
+
       </div>
 
-      <div class="form-group">
-        <input type="email" id="regEmail" required>
-        <label>Email Address</label>
+    </section>
+
+    <!-- =====================================
+         RIGHT PANEL
+    ====================================== -->
+
+    <section class="right-panel">
+
+      <div class="login-card">
+
+        <!-- HEADER -->
+        <div class="login-header">
+
+          <h2>Create Account</h2>
+
+          <p>
+            Start managing your storage system
+          </p>
+
+        </div>
+
+        <!-- FORM -->
+        <div class="form">
+
+          <!-- FULL NAME -->
+          <div class="form-group">
+
+            <input
+              type="text"
+              id="registerName"
+              required
+              placeholder=" "
+              autocomplete="name"
+            />
+
+            <label>Full Name</label>
+
+          </div>
+
+          <!-- EMAIL -->
+          <div class="form-group">
+
+            <input
+              type="email"
+              id="registerEmail"
+              required
+              placeholder=" "
+              autocomplete="email"
+            />
+
+            <label>Email Address</label>
+
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="form-group">
+
+            <input
+              type="password"
+              id="registerPassword"
+              required
+              placeholder=" "
+              autocomplete="new-password"
+            />
+
+            <label>Password</label>
+
+            <span
+              class="toggle"
+              onclick="togglePassword('registerPassword')"
+            >
+
+              <i data-lucide="eye"></i>
+
+            </span>
+
+          </div>
+
+          <!-- CONFIRM PASSWORD -->
+          <div class="form-group">
+
+            <input
+              type="password"
+              id="confirmPassword"
+              required
+              placeholder=" "
+              autocomplete="new-password"
+            />
+
+            <label>Confirm Password</label>
+
+            <span
+              class="toggle"
+              onclick="togglePassword('confirmPassword')"
+            >
+
+              <i data-lucide="eye"></i>
+
+            </span>
+
+          </div>
+
+          <!-- BUTTON -->
+          <button
+            class="login-btn"
+            onclick="register(this)"
+          >
+            Create Account
+          </button>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="bottom-text">
+
+          Already have an account?
+          <a href="index.html">
+            Sign in
+          </a>
+
+        </div>
+
       </div>
 
-      <div class="form-group">
-        <input type="password" id="regPass" required>
-        <label>Password</label>
-        <span class="toggle" onclick="togglePassword('regPass')">👁</span>
-      </div>
+    </section>
 
-      <div id="strength" class="strength"></div>
+  </main>
 
-      <div class="form-group">
-        <input type="password" id="confirmPass" required>
-        <label>Confirm Password</label>
-      </div>
+  <!-- =====================================
+       TOAST
+  ====================================== -->
 
-      <button class="btn green" onclick="register(this)">Create Account</button>
+  <div id="toast"></div>
 
-    </div>
+  <!-- =====================================
+       SUPABASE CDN
+  ====================================== -->
 
-    <p class="bottom-text">
-      Already have an account? <a href="index.html">Sign in</a>
-    </p>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  </div>
-</div>
+  <!-- =====================================
+       LUCIDE ICONS
+  ====================================== -->
 
-<div id="toast"></div>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<script src="script.js"></script>
+  <!-- =====================================
+       SCRIPT
+  ====================================== -->
+
+  <script src="script.js"></script>
+
+  <!-- =====================================
+       INITIALIZE ICONS
+  ====================================== -->
+
+  <script>
+    lucide.createIcons();
+  </script>
+
 </body>
 </html>

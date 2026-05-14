@@ -1,189 +1,578 @@
-// ================= PASSWORD TOGGLE =================
-function togglePassword(id) {
-  let input = document.getElementById(id);
-  if (!input) return;
-  input.type = input.type === "password" ? "text" : "password";
-}
+/* =========================================
+   SUPABASE CONFIG
+========================================= */
 
-// ================= TOAST =================
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
+const SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-  toast.innerText = msg;
-  toast.classList.add("show");
+const SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
 
-  setTimeout(() => toast.classList.remove("show"), 3000);
-}
-
-// ================= DARK MODE =================
-function toggleDark() {
-  document.body.classList.toggle("dark");
-
-  if (document.body.classList.contains("dark")) {
-    localStorage.setItem("darkMode", "enabled");
-  } else {
-    localStorage.removeItem("darkMode");
-  }
-}
-
-// ================= PASSWORD STRENGTH =================
-let regPass = document.getElementById("regPass");
-
-if (regPass) {
-  regPass.addEventListener("input", function () {
-    let val = this.value;
-    let strength = document.getElementById("strength");
-
-    if (!strength) return;
-
-    if (val.length < 6) {
-      strength.innerText = "Weak password";
-      strength.style.color = "red";
-    } else if (val.length < 10) {
-      strength.innerText = "Medium strength";
-      strength.style.color = "orange";
-    } else {
-      strength.innerText = "Strong password";
-      strength.style.color = "green";
-    }
-  });
-}
-
-// ================= INIT ADMIN =================
-function initAdmin() {
-  let users = JSON.parse(localStorage.getItem("users")) || [];
-
-  if (users.length === 0) {
-    users.push({
-      username: "admin",
-      password: "admin123",
-      role: "admin"
-    });
-
-    localStorage.setItem("users", JSON.stringify(users));
-  }
-}
-
-// ================= LOGIN =================
-function login(btn) {
-  let email = document.getElementById("loginEmail")?.value.trim();
-  let pass = document.getElementById("loginPassword")?.value.trim();
-  let remember = document.getElementById("rememberMe")?.checked;
-
-  if (!email) return showToast("Enter email");
-  if (!pass) return showToast("Enter password");
-
-  let users = JSON.parse(localStorage.getItem("users")) || [];
-
-  let user = users.find(u =>
-    u.username === email && u.password === pass
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
   );
 
-  if (!user) return showToast("Invalid credentials");
+/* =========================================
+   PASSWORD TOGGLE
+========================================= */
 
-  localStorage.setItem("currentUser", JSON.stringify(user));
+function togglePassword(id){
 
-  // remember me
-  if (remember) {
-    localStorage.setItem("rememberEmail", email);
-  } else {
-    localStorage.removeItem("rememberEmail");
+  const input =
+    document.getElementById(id);
+
+  if(!input) return;
+
+  const icon =
+    input.parentElement.querySelector(
+      ".toggle i"
+    );
+
+  if(input.type === "password"){
+
+    input.type = "text";
+
+    if(icon){
+
+      icon.setAttribute(
+        "data-lucide",
+        "eye-off"
+      );
+    }
+
+  }else{
+
+    input.type = "password";
+
+    if(icon){
+
+      icon.setAttribute(
+        "data-lucide",
+        "eye"
+      );
+    }
   }
 
-  // loading state
-  if (btn) {
-    btn.innerText = "Signing in...";
-    btn.disabled = true;
-  }
+  lucide.createIcons();
+}
+
+/* =========================================
+   TOAST
+========================================= */
+
+function showToast(message){
+
+  const toast =
+    document.getElementById("toast");
+
+  if(!toast) return;
+
+  toast.innerText = message;
+
+  toast.classList.add("show");
 
   setTimeout(() => {
-    showToast("Login successful");
 
-    // ✅ FIXED PATH (FINAL)
-    window.location.href = "dashboard.html";
+    toast.classList.remove("show");
 
-  }, 800);
+  }, 3000);
 }
 
-// ================= REGISTER =================
-function register(btn) {
-  let email = document.getElementById("regEmail")?.value.trim();
-  let pass = document.getElementById("regPass")?.value.trim();
-  let confirm = document.getElementById("confirmPass")?.value.trim();
+/* =========================================
+   THEME ICON
+========================================= */
 
-  if (!email || !pass || !confirm) {
-    return showToast("Fill all fields");
-  }
+function updateThemeIcon(isLight){
 
-  if (pass !== confirm) {
-    return showToast("Passwords do not match");
-  }
+  const themeIcon =
+    document.getElementById(
+      "themeIcon"
+    );
 
-  let users = JSON.parse(localStorage.getItem("users")) || [];
+  if(!themeIcon) return;
 
-  if (users.find(u => u.username === email)) {
-    return showToast("User already exists");
-  }
+  themeIcon.innerHTML = isLight
 
-  users.push({
-    username: email,
-    password: pass,
-    role: "staff"
-  });
+    ? `<i data-lucide="sun"></i>`
 
-  localStorage.setItem("users", JSON.stringify(users));
+    : `<i data-lucide="moon"></i>`;
 
-  if (btn) {
-    btn.innerText = "Creating...";
-    btn.disabled = true;
-  }
-
-  setTimeout(() => {
-    showToast("Account created");
-
-    // back to login
-    window.location.href = "index.html";
-
-  }, 1000);
+  lucide.createIcons();
 }
 
-// ================= MODAL =================
-function openModal() {
-  let modal = document.getElementById("modal");
-  if (modal) modal.style.display = "flex";
-}
+/* =========================================
+   THEME SYSTEM
+========================================= */
 
-function closeModal() {
-  let modal = document.getElementById("modal");
-  if (modal) modal.style.display = "none";
-}
+function initTheme(){
 
-function sendReset() {
-  let email = document.getElementById("resetEmail")?.value;
+  const savedTheme =
+    localStorage.getItem("theme");
 
-  if (!email || !email.includes("@")) {
-    return showToast("Enter a valid email");
+  const isLight =
+    savedTheme === "light";
+
+  if(isLight){
+
+    document.body.classList.add(
+      "light-mode"
+    );
   }
 
-  showToast("Reset link sent (demo)");
-  closeModal();
+  updateThemeIcon(isLight);
+
+  const themeToggle =
+    document.getElementById(
+      "themeToggle"
+    );
+
+  if(themeToggle){
+
+    themeToggle.addEventListener(
+      "click",
+      () => {
+
+        document.body.classList.toggle(
+          "light-mode"
+        );
+
+        const lightMode =
+          document.body.classList.contains(
+            "light-mode"
+          );
+
+        localStorage.setItem(
+          "theme",
+          lightMode
+            ? "light"
+            : "dark"
+        );
+
+        updateThemeIcon(lightMode);
+
+      }
+    );
+  }
 }
 
-// ================= INIT =================
-window.onload = function () {
-  initAdmin();
+/* =========================================
+   LOGIN
+========================================= */
 
-  let savedEmail = localStorage.getItem("rememberEmail");
+async function login(button){
 
-  if (savedEmail && document.getElementById("loginEmail")) {
-    document.getElementById("loginEmail").value = savedEmail;
+  const email =
+    document.getElementById(
+      "loginEmail"
+    )?.value.trim();
 
-    let checkbox = document.getElementById("rememberMe");
-    if (checkbox) checkbox.checked = true;
+  const password =
+    document.getElementById(
+      "loginPassword"
+    )?.value.trim();
+
+  const remember =
+    document.getElementById(
+      "rememberMe"
+    )?.checked;
+
+  if(!email){
+
+    return showToast(
+      "Enter your email"
+    );
   }
 
-  if (localStorage.getItem("darkMode") === "enabled") {
-    document.body.classList.add("dark");
+  if(!password){
+
+    return showToast(
+      "Enter your password"
+    );
   }
+
+  if(button){
+
+    button.innerText =
+      "Signing in...";
+
+    button.disabled = true;
+  }
+
+  try{
+
+    const { error } =
+      await supabaseClient.auth
+      .signInWithPassword({
+
+        email,
+        password
+      });
+
+    if(error){
+
+      showToast(error.message);
+
+      if(button){
+
+        button.innerText =
+          "Sign In";
+
+        button.disabled = false;
+      }
+
+      return;
+    }
+
+    // REMEMBER EMAIL
+
+    if(remember){
+
+      localStorage.setItem(
+        "rememberEmail",
+        email
+      );
+
+    }else{
+
+      localStorage.removeItem(
+        "rememberEmail"
+      );
+    }
+
+    showToast(
+      "Login successful"
+    );
+
+    setTimeout(() => {
+
+      window.location.href =
+        "dashboard.html";
+
+    }, 1000);
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Something went wrong"
+    );
+
+    if(button){
+
+      button.innerText =
+        "Sign In";
+
+      button.disabled = false;
+    }
+  }
+}
+
+/* =========================================
+   REGISTER
+========================================= */
+
+async function register(button){
+
+  const fullName =
+    document.getElementById(
+      "registerName"
+    )?.value.trim();
+
+  const email =
+    document.getElementById(
+      "registerEmail"
+    )?.value.trim();
+
+  const password =
+    document.getElementById(
+      "registerPassword"
+    )?.value.trim();
+
+  const confirmPassword =
+    document.getElementById(
+      "confirmPassword"
+    )?.value.trim();
+
+  if(
+    !fullName ||
+    !email ||
+    !password ||
+    !confirmPassword
+  ){
+
+    return showToast(
+      "Fill all fields"
+    );
+  }
+
+  if(password !== confirmPassword){
+
+    return showToast(
+      "Passwords do not match"
+    );
+  }
+
+  if(password.length < 6){
+
+    return showToast(
+      "Password must be at least 6 characters"
+    );
+  }
+
+  if(button){
+
+    button.innerText =
+      "Creating...";
+
+    button.disabled = true;
+  }
+
+  try{
+
+    const { error } =
+      await supabaseClient.auth
+      .signUp({
+
+        email,
+        password,
+
+        options: {
+
+          data: {
+
+            fullname: fullName
+          }
+        }
+      });
+
+    if(error){
+
+      showToast(error.message);
+
+      if(button){
+
+        button.innerText =
+          "Create Account";
+
+        button.disabled = false;
+      }
+
+      return;
+    }
+
+    showToast(
+      "Account created successfully"
+    );
+
+    setTimeout(() => {
+
+      window.location.href =
+        "index.html";
+
+    }, 1200);
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Something went wrong"
+    );
+
+    if(button){
+
+      button.innerText =
+        "Create Account";
+
+      button.disabled = false;
+    }
+  }
+}
+
+/* =========================================
+   PASSWORD RESET
+========================================= */
+
+async function sendReset(){
+
+  const email =
+    document.getElementById(
+      "resetEmail"
+    )?.value.trim();
+
+  if(
+    !email ||
+    !email.includes("@")
+  ){
+
+    return showToast(
+      "Enter a valid email"
+    );
+  }
+
+  try{
+
+    const { error } =
+      await supabaseClient.auth
+      .resetPasswordForEmail(
+        email,
+        {
+
+          redirectTo:
+            window.location.origin
+        }
+      );
+
+    if(error){
+
+      return showToast(
+        error.message
+      );
+    }
+
+    showToast(
+      "Reset link sent"
+    );
+
+    closeModal();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Something went wrong"
+    );
+  }
+}
+
+/* =========================================
+   MODAL
+========================================= */
+
+function openModal(){
+
+  const modal =
+    document.getElementById(
+      "modal"
+    );
+
+  if(modal){
+
+    modal.style.display =
+      "flex";
+  }
+}
+
+function closeModal(){
+
+  const modal =
+    document.getElementById(
+      "modal"
+    );
+
+  if(modal){
+
+    modal.style.display =
+      "none";
+  }
+}
+
+/* =========================================
+   AUTH SESSION
+========================================= */
+
+async function checkSession(){
+
+  try{
+
+    const { data } =
+      await supabaseClient.auth
+      .getSession();
+
+    const session =
+      data?.session;
+
+    if(
+      session &&
+      window.location.pathname.includes(
+        "index.html"
+      )
+    ){
+
+      window.location.href =
+        "dashboard.html";
+    }
+
+  }catch(error){
+
+    console.error(error);
+  }
+}
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+async function logout(){
+
+  await supabaseClient.auth
+    .signOut();
+
+  window.location.href =
+    "index.html";
+}
+
+/* =========================================
+   REMEMBER EMAIL
+========================================= */
+
+function loadRememberedEmail(){
+
+  const rememberedEmail =
+    localStorage.getItem(
+      "rememberEmail"
+    );
+
+  const loginEmail =
+    document.getElementById(
+      "loginEmail"
+    );
+
+  const rememberCheckbox =
+    document.getElementById(
+      "rememberMe"
+    );
+
+  if(
+    rememberedEmail &&
+    loginEmail
+  ){
+
+    loginEmail.value =
+      rememberedEmail;
+
+    if(rememberCheckbox){
+
+      rememberCheckbox.checked = true;
+    }
+  }
+}
+
+/* =========================================
+   INITIALIZATION
+========================================= */
+
+window.onload = async function(){
+
+  initTheme();
+
+  loadRememberedEmail();
+
+  await checkSession();
+
+  lucide.createIcons();
 };

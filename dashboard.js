@@ -1,272 +1,932 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+/* =========================================
+   SUPABASE CONFIG
+========================================= */
 
-if (!currentUser) {
-  window.location.href = "index.html";
-}
+const SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-if (currentUser.role !== "admin") {
-  let adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) adminLink.style.display = "none";
-}
+const SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
 
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
-}
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-/* ================= DATA ================= */
-function getProducts() {
-  return JSON.parse(localStorage.getItem("products")) || [];
-}
+/* =========================================
+   GLOBALS
+========================================= */
 
-function getTransactions() {
-  return JSON.parse(localStorage.getItem("transactions")) || [];
-}
-
-function getNotifications() {
-  return JSON.parse(localStorage.getItem("notifications")) || [];
-}
-
-/* ================= SALES ================= */
-function getTotalSales() {
-  let txns = getTransactions();
-  return txns.reduce((sum, t) => sum + Number(t.total || 0), 0);
-}
-
-function getTotalItemsSold() {
-  let txns = getTransactions();
-
-  return txns.reduce((sum, t) => {
-    if (t.items) {
-      return sum + t.items.reduce((s, i) => s + Number(i.qty || 0), 0);
-    }
-    return sum + Number(t.qty || 0);
-  }, 0);
-}
-
-function getTodaySales() {
-  let txns = getTransactions();
-  let today = new Date().toDateString();
-
-  return txns.reduce((sum, t) => {
-    let tDate = new Date(t.date).toDateString();
-    return tDate === today ? sum + Number(t.total || 0) : sum;
-  }, 0);
-}
-
-/* ================= CHART SETTINGS ================= */
-Chart.defaults.color = "#cbd5f5";
-Chart.defaults.borderColor = "rgba(255,255,255,0.1)";
+let currentUser = null;
 
 let barChartInstance;
 let pieChartInstance;
 
-/* ================= DASHBOARD STATS ================= */
-function updateDashboardStats() {
-  let products = getProducts();
+/* =========================================
+   THEME ICON
+========================================= */
 
-  let totalProducts = products.length;
-  let lowStock = products.filter(p => Number(p.qty) <= 5).length;
+function updateThemeIcon(isLight){
 
-  let totalValue = products.reduce((sum, p) => {
-    let price = Number(String(p.price).replace(/[^\d]/g, "")) || 0;
-    let qty = Number(p.qty) || 0;
-    return sum + (price * qty);
-  }, 0);
+  const themeIcon =
+    document.getElementById(
+      "themeIcon"
+    );
 
-  document.getElementById("totalProducts").innerText = totalProducts;
-  document.getElementById("lowStock").innerText = lowStock;
-  document.getElementById("totalValue").innerText =
-    "₱" + totalValue.toLocaleString();
+  if(!themeIcon) return;
 
-  document.getElementById("totalSales").innerText =
-    "₱" + getTotalSales().toLocaleString();
+  themeIcon.innerHTML = isLight
 
-  document.getElementById("totalItemsSold").innerText =
+  ? `
+
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+
+      <circle cx="12" cy="12" r="5"></circle>
+
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+
+    </svg>
+
+  `
+
+  : `
+
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+
+      <path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9z"></path>
+
+    </svg>
+
+  `;
+}
+
+/* =========================================
+   THEME SYSTEM
+========================================= */
+
+function initTheme(){
+
+  const savedTheme =
+    localStorage.getItem("theme");
+
+  const isLight =
+    savedTheme === "light";
+
+  if(isLight){
+
+    document.body.classList.add(
+      "light-mode"
+    );
+  }
+
+  updateThemeIcon(isLight);
+
+  const themeToggle =
+    document.getElementById(
+      "themeToggle"
+    );
+
+  if(themeToggle){
+
+    themeToggle.addEventListener(
+      "click",
+      () => {
+
+        document.body.classList.toggle(
+          "light-mode"
+        );
+
+        const lightMode =
+          document.body.classList.contains(
+            "light-mode"
+          );
+
+        localStorage.setItem(
+          "theme",
+          lightMode
+            ? "light"
+            : "dark"
+        );
+
+        updateThemeIcon(lightMode);
+
+      }
+    );
+  }
+}
+
+/* =========================================
+   AUTH CHECK
+========================================= */
+
+async function checkAuth(){
+
+  try{
+
+    const { data, error } =
+      await supabaseClient.auth.getSession();
+
+    if(error){
+
+      console.error(error);
+
+      window.location.href =
+        "index.html";
+
+      return;
+    }
+
+    const session =
+      data?.session;
+
+    if(!session){
+
+      window.location.href =
+        "index.html";
+
+      return;
+    }
+
+    currentUser = session.user;
+
+    loadUserInfo();
+
+  }catch(error){
+
+    console.error(error);
+
+    window.location.href =
+      "index.html";
+  }
+}
+
+/* =========================================
+   LOAD USER INFO
+========================================= */
+
+function loadUserInfo(){
+
+  const userName =
+    document.getElementById(
+      "userName"
+    );
+
+  if(!userName || !currentUser)
+    return;
+
+  const fullName =
+    currentUser.user_metadata
+      ?.fullname;
+
+  userName.innerText =
+    fullName ||
+    currentUser.email ||
+    "User";
+}
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+async function logout(){
+
+  await supabaseClient.auth.signOut();
+
+  window.location.href =
+    "index.html";
+}
+
+/* =========================================
+   MOBILE SIDEBAR
+========================================= */
+
+function toggleSidebar(){
+
+  const sidebar =
+    document.getElementById(
+      "sidebar"
+    );
+
+  const overlay =
+    document.getElementById(
+      "sidebarOverlay"
+    );
+
+  if(!sidebar || !overlay)
+    return;
+
+  sidebar.classList.toggle(
+    "show"
+  );
+
+  overlay.classList.toggle(
+    "show"
+  );
+}
+
+/* =========================================
+   DATA
+========================================= */
+
+function getProducts(){
+
+  return JSON.parse(
+    localStorage.getItem(
+      "products"
+    )
+  ) || [];
+}
+
+function getTransactions(){
+
+  return JSON.parse(
+    localStorage.getItem(
+      "transactions"
+    )
+  ) || [];
+}
+
+function getNotifications(){
+
+  return JSON.parse(
+    localStorage.getItem(
+      "notifications"
+    )
+  ) || [];
+}
+
+/* =========================================
+   SALES
+========================================= */
+
+function getTotalSales(){
+
+  const txns =
+    getTransactions();
+
+  return txns.reduce(
+    (sum, txn) =>
+
+      sum +
+      Number(txn.total || 0),
+
+    0
+  );
+}
+
+function getTotalItemsSold(){
+
+  const txns =
+    getTransactions();
+
+  return txns.reduce(
+    (sum, txn) => {
+
+      if(txn.items){
+
+        return (
+          sum +
+          txn.items.reduce(
+            (s, item) =>
+
+              s +
+              Number(item.qty || 0),
+
+            0
+          )
+        );
+      }
+
+      return (
+        sum +
+        Number(txn.qty || 0)
+      );
+
+    }, 0
+  );
+}
+
+function getTodaySales(){
+
+  const txns =
+    getTransactions();
+
+  const today =
+    new Date().toDateString();
+
+  return txns.reduce(
+    (sum, txn) => {
+
+      const txnDate =
+        new Date(
+          txn.date
+        ).toDateString();
+
+      return txnDate === today
+
+        ? sum +
+          Number(txn.total || 0)
+
+        : sum;
+
+    }, 0
+  );
+}
+
+/* =========================================
+   CHART SETTINGS
+========================================= */
+
+Chart.defaults.color =
+  "#94a3b8";
+
+Chart.defaults.borderColor =
+  "rgba(255,255,255,0.08)";
+
+/* =========================================
+   DASHBOARD STATS
+========================================= */
+
+function updateDashboardStats(){
+
+  const products =
+    getProducts();
+
+  const totalProducts =
+    products.length;
+
+  const lowStock =
+    products.filter(
+      product =>
+        Number(product.qty) <= 5
+    ).length;
+
+  const totalValue =
+    products.reduce(
+      (sum, product) => {
+
+        const price =
+          Number(
+            String(product.price)
+            .replace(/[^\d]/g, "")
+          ) || 0;
+
+        const qty =
+          Number(product.qty) || 0;
+
+        return (
+          sum +
+          (price * qty)
+        );
+
+      }, 0
+    );
+
+  document.getElementById(
+    "totalProducts"
+  ).innerText =
+    totalProducts;
+
+  document.getElementById(
+    "lowStock"
+  ).innerText =
+    lowStock;
+
+  document.getElementById(
+    "totalValue"
+  ).innerText =
+    "₱" +
+    totalValue.toLocaleString();
+
+  document.getElementById(
+    "totalSales"
+  ).innerText =
+    "₱" +
+    getTotalSales()
+    .toLocaleString();
+
+  document.getElementById(
+    "totalItemsSold"
+  ).innerText =
     getTotalItemsSold();
 
-  document.getElementById("dailySales").innerText =
-    "₱" + getTodaySales().toLocaleString();
+  document.getElementById(
+    "dailySales"
+  ).innerText =
+    "₱" +
+    getTodaySales()
+    .toLocaleString();
 }
 
-/* ================= BAR CHART ================= */
-function loadBarChart() {
-  const ctx = document.getElementById("barChart");
-  if (!ctx) return;
+/* =========================================
+   BAR CHART
+========================================= */
 
-  let products = getProducts();
+function loadBarChart(){
 
-  if (barChartInstance) barChartInstance.destroy();
+  const canvas =
+    document.getElementById(
+      "barChart"
+    );
 
-  barChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: products.map(p => p.name),
-      datasets: [{
-        data: products.map(p => Number(p.qty) || 0),
-        backgroundColor: "#6366f1",
-        borderRadius: 8
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { display: false }, grid: { display: false } },
-        y: { beginAtZero: true }
+  if(!canvas) return;
+
+  const products =
+    getProducts();
+
+  if(barChartInstance){
+
+    barChartInstance.destroy();
+  }
+
+  barChartInstance =
+    new Chart(canvas, {
+
+      type: "bar",
+
+      data: {
+
+        labels:
+          products.map(
+            product =>
+              product.name
+          ),
+
+        datasets: [{
+
+          data:
+            products.map(
+              product =>
+                Number(
+                  product.qty
+                ) || 0
+            ),
+
+          backgroundColor:
+            "#6366f1",
+
+          borderRadius: 8
+        }]
+      },
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+          legend: {
+            display: false
+          }
+        },
+
+        scales: {
+
+          x: {
+
+            ticks: {
+              display: false
+            },
+
+            grid: {
+              display: false
+            }
+          },
+
+          y: {
+
+            beginAtZero: true
+          }
+        }
       }
-    }
-  });
+    });
 }
 
-/* ================= PIE CHART ================= */
-function loadPieChart() {
-  const ctx = document.getElementById("pieChart");
-  if (!ctx) return;
+/* =========================================
+   PIE CHART
+========================================= */
 
-  let products = getProducts();
+function loadPieChart(){
 
-  let categoryMap = {};
-  products.forEach(p => {
-    let qty = Number(p.qty) || 0;
-    categoryMap[p.category] = (categoryMap[p.category] || 0) + qty;
+  const canvas =
+    document.getElementById(
+      "pieChart"
+    );
+
+  if(!canvas) return;
+
+  const products =
+    getProducts();
+
+  const categoryMap = {};
+
+  products.forEach(product => {
+
+    const qty =
+      Number(product.qty) || 0;
+
+    categoryMap[
+      product.category
+    ] =
+      (categoryMap[
+        product.category
+      ] || 0) + qty;
   });
 
-  if (pieChartInstance) pieChartInstance.destroy();
+  if(pieChartInstance){
 
-  pieChartInstance = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: Object.keys(categoryMap),
-      datasets: [{
-        data: Object.values(categoryMap),
-        backgroundColor: ["#4f46e5", "#22c55e", "#f59e0b", "#ef4444"],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      plugins: { legend: { position: "bottom" } },
-      cutout: "65%"
-    }
-  });
+    pieChartInstance.destroy();
+  }
+
+  pieChartInstance =
+    new Chart(canvas, {
+
+      type: "doughnut",
+
+      data: {
+
+        labels:
+          Object.keys(
+            categoryMap
+          ),
+
+        datasets: [{
+
+          data:
+            Object.values(
+              categoryMap
+            ),
+
+          backgroundColor: [
+
+            "#6366f1",
+            "#22c55e",
+            "#f59e0b",
+            "#ef4444"
+          ],
+
+          borderWidth: 0
+        }]
+      },
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+          legend: {
+
+            position: "bottom"
+          }
+        },
+
+        cutout: "68%"
+      }
+    });
 }
 
-/* ================= LOW STOCK ================= */
-function renderLowStock() {
-  const container = document.getElementById("lowStockList");
-  if (!container) return;
+/* =========================================
+   LOW STOCK
+========================================= */
 
-  let low = getProducts().filter(p => Number(p.qty) <= 5);
+function renderLowStock(){
+
+  const container =
+    document.getElementById(
+      "lowStockList"
+    );
+
+  if(!container) return;
+
+  const lowStockProducts =
+    getProducts().filter(
+      product =>
+        Number(product.qty) <= 5
+    );
 
   container.innerHTML = "";
 
-  if (low.length === 0) {
-    container.innerHTML = "<p>No low stock items</p>";
+  if(lowStockProducts.length === 0){
+
+    container.innerHTML =
+      "<p>No low stock items</p>";
+
     return;
   }
 
-  low.forEach(p => {
-    let qty = Number(p.qty) || 0;
+  lowStockProducts.forEach(
+    product => {
 
-    container.innerHTML += `
-      <div class="stock">
-        ${p.name}
-        <div class="bar">
-          <span style="width:${Math.min(qty * 10,100)}%"></span>
+      const qty =
+        Number(product.qty) || 0;
+
+      container.innerHTML += `
+
+        <div class="stock">
+
+          ${product.name}
+
+          <div class="bar">
+
+            <span
+              style="
+                width:
+                ${Math.min(qty * 10,100)}%
+              "
+            ></span>
+
+          </div>
+
         </div>
-      </div>
-    `;
-  });
+      `;
+    }
+  );
 }
 
-/* ================= ACTIVITY ================= */
-function renderActivity() {
-  const container = document.getElementById("recentActivity");
-  if (!container) return;
+/* =========================================
+   RECENT ACTIVITY
+========================================= */
 
-  let txns = getTransactions();
+function renderActivity(){
+
+  const container =
+    document.getElementById(
+      "recentActivity"
+    );
+
+  if(!container) return;
+
+  const txns =
+    getTransactions();
+
   container.innerHTML = "";
 
-  txns.slice(0, 5).forEach(t => {
+  txns.slice(0, 5)
+  .forEach(txn => {
+
     container.innerHTML += `
+
       <div class="txn">
-        ${t.name} sold
-        <span>${t.qty} pcs → ${t.buyer || "N/A"}</span>
+
+        ${txn.name} sold
+
+        <span>
+
+          ${txn.qty} pcs
+          →
+          ${txn.buyer || "N/A"}
+
+        </span>
+
       </div>
     `;
   });
 }
 
-/* ================= NOTIFICATIONS (FIXED UI) ================= */
-function toggleNotif() {
-  document.getElementById("notifPanel").classList.toggle("show");
+/* =========================================
+   NOTIFICATIONS
+========================================= */
+
+function toggleNotif(){
+
+  const panel =
+    document.getElementById(
+      "notifPanel"
+    );
+
+  if(panel){
+
+    panel.classList.toggle(
+      "show"
+    );
+  }
 }
 
-function renderNotifications() {
-  let notifications = getNotifications();
-  let list = document.getElementById("notifList");
-  let badge = document.getElementById("notifDot");
+function renderNotifications(){
+
+  const notifications =
+    getNotifications();
+
+  const list =
+    document.getElementById(
+      "notifList"
+    );
+
+  const badge =
+    document.getElementById(
+      "notifDot"
+    );
+
+  if(!list || !badge)
+    return;
 
   list.innerHTML = "";
 
-  if (notifications.length === 0) {
-    list.innerHTML = `<div class="notif-empty">No notifications</div>`;
-    badge.style.display = "none";
+  if(notifications.length === 0){
+
+    list.innerHTML = `
+
+      <div class="notif-empty">
+        No notifications
+      </div>
+    `;
+
+    badge.style.display =
+      "none";
+
     return;
   }
 
-  badge.style.display = "flex";
-  badge.innerText = notifications.length;
+  badge.style.display =
+    "flex";
 
-  notifications.forEach(n => {
-    list.innerHTML += `
-      <div class="notif-item">
-        <div class="notif-icon">${n.icon || "🔔"}</div>
-        <div class="notif-content">
-          <div class="notif-title">${n.title}</div>
-          <div class="notif-desc">${n.desc}</div>
+  badge.innerText =
+    notifications.length;
+
+  notifications.forEach(
+    notification => {
+
+      list.innerHTML += `
+
+        <div class="notif-item">
+
+          <div class="notif-icon">
+
+            ${
+              notification.icon ||
+              "🔔"
+            }
+
+          </div>
+
+          <div class="notif-content">
+
+            <div class="notif-title">
+
+              ${notification.title}
+
+            </div>
+
+            <div class="notif-desc">
+
+              ${notification.desc}
+
+            </div>
+
+          </div>
+
         </div>
-      </div>
-    `;
-  });
+      `;
+    }
+  );
 }
 
-function clearNotif() {
-  localStorage.removeItem("notifications");
+function clearNotif(){
+
+  localStorage.removeItem(
+    "notifications"
+  );
+
   renderNotifications();
+
   renderActivity();
-  showToast("Notifications cleared");
+
+  showToast(
+    "Notifications cleared"
+  );
 }
 
-/* ================= EVENTS ================= */
-window.addEventListener("storage", () => {
-  updateDashboardStats();
-  loadBarChart();
-  loadPieChart();
-  renderNotifications();
-  renderLowStock();
-  renderActivity();
-});
+/* =========================================
+   TOAST
+========================================= */
 
-function showToast(message) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.innerText = message;
+function showToast(message){
 
-  document.body.appendChild(toast);
+  const toast =
+    document.createElement(
+      "div"
+    );
 
-  setTimeout(() => toast.classList.add("show"), 100);
-  setTimeout(() => toast.remove(), 3000);
-}
+  toast.className =
+    "toast";
 
-window.addEventListener("load", () => {
-  updateDashboardStats();
-  loadBarChart();
-  loadPieChart();
-  renderNotifications();
-  renderLowStock();
-  renderActivity();
+  toast.innerText =
+    message;
+
+  document.body.appendChild(
+    toast
+  );
 
   setTimeout(() => {
-    showToast(`Welcome back, ${currentUser.username || "User"} 👋`);
-  }, 800);
-});
+
+    toast.classList.add(
+      "show"
+    );
+
+  }, 100);
+
+  setTimeout(() => {
+
+    toast.remove();
+
+  }, 3000);
+}
+
+/* =========================================
+   AUTO UPDATE
+========================================= */
+
+window.addEventListener(
+  "storage",
+  () => {
+
+    updateDashboardStats();
+
+    loadBarChart();
+
+    loadPieChart();
+
+    renderNotifications();
+
+    renderLowStock();
+
+    renderActivity();
+  }
+);
+
+/* =========================================
+   INITIALIZATION
+========================================= */
+
+window.addEventListener(
+  "load",
+  async () => {
+
+    initTheme();
+
+    await checkAuth();
+
+    updateDashboardStats();
+
+    loadBarChart();
+
+    loadPieChart();
+
+    renderNotifications();
+
+    renderLowStock();
+
+    renderActivity();
+
+    setTimeout(() => {
+
+      showToast(
+
+        `Welcome back, ${
+          currentUser?.user_metadata
+            ?.fullname ||
+
+          currentUser?.email ||
+
+          "User"
+        } 👋`
+      );
+
+    }, 800);
+  }
+);

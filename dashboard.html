@@ -1,150 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Dashboard | BAO Storage</title>
-<link rel="stylesheet" href="dashboard.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Dashboard | BAO Storage</title>
+
+  <!-- GOOGLE FONT -->
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- DASHBOARD CSS -->
+  <link
+    rel="stylesheet"
+    href="dashboard.css"
+  />
+
+  <!-- CHART JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+
 <body>
 
-<div class="layout">
+  <!-- =====================================
+       MOBILE SIDEBAR OVERLAY
+  ====================================== -->
 
-  <aside class="sidebar">
-    <header class="sidebar-header">
-      <h2>BAO Storage</h2>
-      <p class="sub">Inventory Management</p>
-    </header>
+  <div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+    onclick="toggleSidebar()"
+  ></div>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html" class="active">Dashboard</a>
-      <a href="products.html">Products</a>
-      <a href="categories.html">Categories</a>
-      <a href="transactions.html">Transactions</a>
-      <a href="admin.html">Admin</a>
-      <a href="reports.html">Reports</a>
-    </nav>
+  <!-- =====================================
+       MOBILE MENU BUTTON
+  ====================================== -->
 
-    <footer class="sidebar-footer">
-      <button class="logout" onclick="logout()">Logout</button>
-    </footer>
-  </aside>
+  <button
+    class="mobile-menu-btn"
+    onclick="toggleSidebar()"
+    aria-label="Toggle Sidebar"
+  >
 
-  <main class="main">
+    <i data-lucide="menu"></i>
 
-    <!-- HEADER -->
-    <header class="topbar">
+  </button>
 
-      <div class="topbar-left">
-        <h1>Dashboard</h1>
-        <p>Welcome back! Here's what's happening with your inventory.</p>
-      </div>
+  <!-- =====================================
+       MAIN LAYOUT
+  ====================================== -->
 
-      <div class="topbar-right">
-        <div class="notif-container">
+  <div class="layout">
 
-          <button class="notif-btn" onclick="toggleNotif()">
-            🔔
-            <span id="notifDot" class="notif-badge" style="display:none;">0</span>
-          </button>
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
 
-          <!-- 🔥 UPDATED NOTIFICATION PANEL -->
-          <div id="notifPanel" class="notif-panel">
+    <aside
+      id="sidebar"
+      class="sidebar"
+    >
 
-            <div class="notif-header">
-              <h4>Notifications</h4>
-              <span class="mark-read" onclick="clearNotif()">Mark all as read</span>
-            </div>
+      <!-- SIDEBAR HEADER -->
+      <header class="sidebar-header">
 
-            <div class="notif-divider"></div>
+        <div class="sidebar-brand">
 
-            <!-- 🔥 DYNAMIC LIST -->
-            <div id="notifList" class="notif-list">
-              <!-- JS will inject notif-item here -->
-            </div>
+          <img
+            src="LSPULOGO3-removebg-preview.png"
+            alt="LSPU Logo"
+            class="sidebar-logo"
+          />
+
+          <div>
+
+            <h2>BAO Storage</h2>
+
+            <p class="sub">
+              Inventory Management
+            </p>
 
           </div>
 
         </div>
+
+      </header>
+
+      <!-- SIDEBAR NAV -->
+      <nav class="sidebar-nav">
+
+        <a
+          href="dashboard.html"
+          class="active"
+        >
+
+          <i data-lucide="layout-dashboard"></i>
+
+          <span>Dashboard</span>
+
+        </a>
+
+        <a href="products.html">
+
+          <i data-lucide="package"></i>
+
+          <span>Products</span>
+
+        </a>
+
+        <a href="categories.html">
+
+          <i data-lucide="folder"></i>
+
+          <span>Categories</span>
+
+        </a>
+
+        <a href="transactions.html">
+
+          <i data-lucide="receipt"></i>
+
+          <span>Transactions</span>
+
+        </a>
+
+        <a href="admin.html">
+
+          <i data-lucide="shield"></i>
+
+          <span>Admin</span>
+
+        </a>
+
+        <a href="reports.html">
+
+          <i data-lucide="file-bar-chart"></i>
+
+          <span>Reports</span>
+
+        </a>
+
+      </nav>
+
+      <!-- SIDEBAR FOOTER -->
+      <footer class="sidebar-footer">
+
+        <button
+          class="logout"
+          onclick="logout()"
+        >
+
+          <i data-lucide="log-out"></i>
+
+          <span>Logout</span>
+
+        </button>
+
+      </footer>
+
+    </aside>
+
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
+
+    <main class="main">
+
+      <!-- =====================================
+           TOPBAR
+      ====================================== -->
+
+      <header class="topbar">
+
+        <!-- LEFT -->
+        <div class="topbar-left">
+
+          <h1>Dashboard</h1>
+
+          <p>
+            Welcome back! Here's what's happening
+            with your inventory.
+          </p>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="topbar-right">
+
+          <!-- USER INFO -->
+          <div class="user-box">
+
+            <div class="user-avatar">
+              A
+            </div>
+
+            <div class="user-info">
+
+              <h4 id="userName">
+                Administrator
+              </h4>
+
+              <p>
+                System Admin
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- NOTIFICATIONS -->
+          <div class="notif-container">
+
+            <button
+              class="notif-btn"
+              onclick="toggleNotif()"
+            >
+
+              <i data-lucide="bell"></i>
+
+              <span
+                id="notifDot"
+                class="notif-badge"
+                style="display:none;"
+              >
+                0
+              </span>
+
+            </button>
+
+            <!-- NOTIFICATION PANEL -->
+            <div
+              id="notifPanel"
+              class="notif-panel"
+            >
+
+              <div class="notif-header">
+
+                <h4>Notifications</h4>
+
+                <span
+                  class="mark-read"
+                  onclick="clearNotif()"
+                >
+                  Mark all as read
+                </span>
+
+              </div>
+
+              <div class="notif-divider"></div>
+
+              <!-- DYNAMIC LIST -->
+              <div
+                id="notifList"
+                class="notif-list"
+              >
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            aria-label="Toggle Theme"
+          >
+
+            <span id="themeIcon">
+              <i data-lucide="moon"></i>
+            </span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+      <!-- =====================================
+           MAIN CONTENT SCROLL AREA
+      ====================================== -->
+
+      <div class="main-content">
+
+        <!-- =====================================
+             STATS
+        ====================================== -->
+
+        <section class="stats">
+
+          <article class="card">
+
+            <p>Total Products</p>
+
+            <h3 id="totalProducts">
+              0
+            </h3>
+
+          </article>
+
+          <article class="card">
+
+            <p>Low Stock Items</p>
+
+            <h3 id="lowStock">
+              0
+            </h3>
+
+          </article>
+
+          <article class="card">
+
+            <p>Total Sales</p>
+
+            <h3 id="totalSales">
+              ₱0
+            </h3>
+
+          </article>
+
+          <article class="card">
+
+            <p>Items Sold</p>
+
+            <h3 id="totalItemsSold">
+              0
+            </h3>
+
+          </article>
+
+          <article class="card">
+
+            <p>Today's Sales</p>
+
+            <h3 id="dailySales">
+              ₱0
+            </h3>
+
+          </article>
+
+          <article class="card">
+
+            <p>Total Value</p>
+
+            <h3 id="totalValue">
+              ₱0
+            </h3>
+
+          </article>
+
+        </section>
+
+        <!-- =====================================
+             CHARTS
+        ====================================== -->
+
+        <section class="grid">
+
+          <div class="panel">
+
+            <h3>
+              Product Quantities
+            </h3>
+
+            <canvas id="barChart"></canvas>
+
+          </div>
+
+          <div class="panel">
+
+            <h3>
+              Inventory by Category
+            </h3>
+
+            <canvas id="pieChart"></canvas>
+
+          </div>
+
+        </section>
+
+        <!-- =====================================
+             EXTRA PANELS
+        ====================================== -->
+
+        <section class="grid">
+
+          <div class="panel">
+
+            <h3>
+
+              <i
+                data-lucide="triangle-alert"
+                class="panel-icon"
+              ></i>
+
+              Low Stock Alerts
+
+            </h3>
+
+            <div id="lowStockList"></div>
+
+          </div>
+
+          <div class="panel">
+
+            <h3>
+              Recent Activity
+            </h3>
+
+            <div id="recentActivity"></div>
+
+          </div>
+
+        </section>
+
       </div>
 
-    </header>
+    </main>
 
-    <!-- SCROLL AREA -->
-    <div class="main-content">
+  </div>
 
-      <!-- ================= STATS ================= -->
-      <section class="stats">
+  <!-- =====================================
+       SUPABASE CDN
+  ====================================== -->
 
-        <article class="card">
-          <p>Total Products</p>
-          <h3 id="totalProducts">0</h3>
-        </article>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        <article class="card">
-          <p>Low Stock Items</p>
-          <h3 id="lowStock">0</h3>
-        </article>
+  <!-- =====================================
+       LUCIDE ICONS
+  ====================================== -->
 
-        <article class="card">
-          <p>Total Sales</p>
-          <h3 id="totalSales">₱0</h3>
-        </article>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-        <article class="card">
-          <p>Items Sold</p>
-          <h3 id="totalItemsSold">0</h3>
-        </article>
+  <!-- =====================================
+       AUTH
+  ====================================== -->
 
-        <article class="card">
-          <p>Today's Sales</p>
-          <h3 id="dailySales">₱0</h3>
-        </article>
+  <script src="auth.js"></script>
 
-        <article class="card">
-          <p>Total Value</p>
-          <h3 id="totalValue">₱0</h3>
-        </article>
+  <!-- =====================================
+       DASHBOARD SCRIPT
+  ====================================== -->
 
-      </section>
+  <script src="dashboard.js"></script>
 
-      <!-- ================= CHARTS ================= -->
-      <section class="grid">
+  <!-- =====================================
+       INITIALIZE ICONS
+  ====================================== -->
 
-        <div class="panel">
-          <h3>Product Quantities</h3>
-          <canvas id="barChart"></canvas>
-        </div>
-
-        <div class="panel">
-          <h3>Inventory by Category</h3>
-          <canvas id="pieChart"></canvas>
-        </div>
-
-      </section>
-
-      <!-- ================= EXTRA ================= -->
-      <section class="grid">
-
-        <div class="panel">
-          <h3>⚠ Low Stock Alerts</h3>
-          <div id="lowStockList"></div>
-        </div>
-
-        <div class="panel">
-          <h3>Recent Activity</h3>
-          <div id="recentActivity"></div>
-        </div>
-
-      </section>
-
-    </div>
-
-  </main>
-</div>
-
-<script src="auth.js"></script>
-<script src="dashboard.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
 
 </body>
 </html>
