@@ -1,288 +1,794 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+const SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-if (!currentUser) {
-  window.location.href = "index.html";
+const SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+let currentUser = null;
+
+let categories = [];
+
+let products = [];
+
+let selectedProductId = null;
+
+let editingProductId = null;
+
+// UUID
+
+function isUuid(value){
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(String(value || ""));
 }
 
-if (currentUser.role !== "admin") {
-  let adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) adminLink.style.display = "none";
+// Toast
+
+function showToast(message){
+
+  const toast =
+    document.getElementById(
+      "toast"
+    );
+
+  if(!toast) return;
+
+  toast.innerText =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+  setTimeout(() => {
+
+    toast.classList.remove(
+      "show"
+    );
+
+  }, 2600);
 }
 
-let products = JSON.parse(localStorage.getItem("products")) || [];
-let selectedIndex = null;
-let editIndex = null;
+// Auth
 
-/* ================= LOAD PRODUCTS ================= */
-function loadProducts() {
-  let raw = JSON.parse(localStorage.getItem("products")) || [];
+async function checkAuth(){
+  const ok =
+    await window
+      .initProtectedPageAuth();
 
-  products = raw.map(p => ({
-    id: p.id ?? Date.now(),
-    name: p.name ?? p.productName ?? "Unnamed",
-    category: p.category ?? "Uncategorized",
-    qty: Number(p.qty ?? p.quantity ?? 0),
-    price: Number(String(p.price).replace(/[^\d]/g, "")) || 0
-  }));
+  if(!ok) return false;
 
-  localStorage.setItem("products", JSON.stringify(products));
+  currentUser =
+    window.appAuth.user;
+
+  return true;
+}
+
+// Fetch categories
+
+async function fetchCategories(){
+
+  const { data, error } =
+    await supabaseClient
+
+      .from("categories")
+
+      .select("*")
+
+      .order("created_at", {
+
+        ascending: false
+      });
+
+  if(error){
+
+    console.error(error);
+
+    categories = [];
+
+    return;
+  }
+
+  categories = data || [];
+
+  loadCategoriesDropdown();
+}
+
+// Fetch products
+
+async function fetchProducts(){
+
+  const { data, error } =
+    await supabaseClient
+
+      .from("products")
+
+      .select(`
+        *,
+        categories (
+          id,
+          name
+        )
+      `)
+
+      .order("created_at", {
+
+        ascending: false
+      });
+
+  if(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to load products"
+    );
+
+    return;
+  }
+
+  products = data || [];
 
   renderTable();
 }
 
-/* ================= LOAD CATEGORIES ================= */
-function loadCategoriesDropdown() {
-  let categories = JSON.parse(localStorage.getItem("categories")) || [];
+// Load dropdown
 
-  let select = document.getElementById("category");
-  let filter = document.getElementById("filter");
+function loadCategoriesDropdown(){
 
-  if (select) {
-    select.innerHTML = "";
+  const category =
+    document.getElementById(
+      "category"
+    );
+
+  const filter =
+    document.getElementById(
+      "filter"
+    );
+
+  if(category){
+
+    category.innerHTML = "";
+
     categories.forEach(cat => {
-      select.innerHTML += `<option value="${cat}">${cat}</option>`;
+
+      category.innerHTML += `
+
+        <option value="${cat.id}">
+
+          ${cat.name}
+
+        </option>
+      `;
     });
   }
 
-  if (filter) {
-    filter.innerHTML = `<option value="All">All Categories</option>`;
+  if(filter){
+
+    filter.innerHTML = `
+      <option value="All">
+        All Categories
+      </option>
+    `;
+
     categories.forEach(cat => {
-      filter.innerHTML += `<option value="${cat}">${cat}</option>`;
+
+      filter.innerHTML += `
+
+        <option value="${cat.id}">
+
+          ${cat.name}
+
+        </option>
+      `;
     });
   }
 }
 
-/* ================= CATEGORY FILTER ================= */
-function applySelectedCategory() {
-  let selected = localStorage.getItem("selectedCategory");
+// Render table
 
-  if (selected) {
-    let filter = document.getElementById("filter");
-    if (filter) filter.value = selected;
-    localStorage.removeItem("selectedCategory");
-  }
-}
+function renderTable(){
 
-/* ================= NOTIFICATION ================= */
-function pushNotification(icon, title, desc) {
-  let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+  const body =
+    document.getElementById(
+      "tableBody"
+    );
 
-  notifications.unshift({
-    icon,
-    title,
-    desc,
-    time: new Date().toISOString()
-  });
+  if(!body) return;
 
-  localStorage.setItem("notifications", JSON.stringify(notifications));
-}
+  const search =
+    document.getElementById(
+      "search"
+    )?.value.toLowerCase() || "";
 
-/* ================= SELL ================= */
-function sellProduct(i) {
-  selectedIndex = i;
-  document.getElementById("sellModal").style.display = "flex";
-}
+  const filter =
+    document.getElementById(
+      "filter"
+    )?.value || "All";
 
-function closeSell() {
-  document.getElementById("sellModal").style.display = "none";
-  document.getElementById("buyer").value = "";
-  document.getElementById("sellQty").value = "";
-}
+  const filtered =
+    products.filter(product => {
 
-/* ================= CONFIRM SELL ================= */
-function confirmSell() {
-  let buyer = document.getElementById("buyer").value.trim();
-  let qty = parseInt(document.getElementById("sellQty").value);
+      const matchSearch =
+        product.name
+          ?.toLowerCase()
+          .includes(search);
 
-  if (!buyer || isNaN(qty) || qty <= 0) {
-    return showToast("Fill all fields properly");
-  }
+      const matchFilter =
 
-  let product = products[selectedIndex];
-  if (!product) return;
+        filter === "All" ||
 
-  if (qty > product.qty) {
-    return showToast("Not enough stock");
-  }
+        String(product.category_id) ===
+        String(filter);
 
-  product.qty -= qty;
+      return (
+        matchSearch &&
+        matchFilter
+      );
+    });
 
-  let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-  let total = product.price * qty;
+  if(filtered.length === 0){
 
-  // 🔥 FIX APPLIED HERE
-  transactions.unshift({
-    name: product.name,
-    category: product.category, // ✅ FIX
-    qty,
-    total,
-    buyer,
-    date: new Date().toISOString()
-  });
+    body.innerHTML = `
 
-  localStorage.setItem("transactions", JSON.stringify(transactions));
-  localStorage.setItem("products", JSON.stringify(products));
-
-  showToast("Transaction completed");
-  pushNotification("🛒", "Product sold", `${product.name} → ${buyer}`);
-
-  closeSell();
-  loadProducts();
-}
-
-/* ================= EDIT PRODUCT ================= */
-function openEdit(index) {
-  let p = products[index];
-  if (!p) return;
-
-  editIndex = index;
-
-  document.getElementById("modalTitle").innerText = "Edit Product";
-  document.getElementById("name").value = p.name;
-  document.getElementById("category").value = p.category;
-  document.getElementById("qty").value = p.qty;
-  document.getElementById("price").value = p.price;
-
-  document.getElementById("modal").style.display = "flex";
-}
-
-/* ================= RENDER ================= */
-function renderTable() {
-  let search = document.getElementById("search")?.value.toLowerCase() || "";
-  let filter = document.getElementById("filter")?.value || "All";
-
-  let body = document.getElementById("tableBody");
-  body.innerHTML = "";
-
-  products.forEach((p, i) => {
-
-    if (!p.name.toLowerCase().includes(search)) return;
-    if (filter !== "All" && p.category !== filter) return;
-
-    let qty = Number(p.qty);
-    let price = Number(p.price);
-
-    let statusText = "";
-    let badgeClass = "";
-
-    if (qty === 0) {
-      statusText = "Out of Stock";
-      badgeClass = "red";
-    } else if (qty <= 5) {
-      statusText = "Low Stock";
-      badgeClass = "yellow";
-    } else {
-      statusText = "In Stock";
-      badgeClass = "green";
-    }
-
-    body.innerHTML += `
       <tr>
-        <td>${p.id}</td>
-        <td>${p.name}</td>
-        <td>${p.category}</td>
-        <td>${qty}</td>
-        <td>₱${price.toLocaleString()}</td>
-        <td><span class="badge ${badgeClass}">${statusText}</span></td>
 
-        <td>
-          <div class="actions">
-            <button class="btn edit" onclick="openEdit(${i})">✏️</button>
-            <button class="btn sell" onclick="sellProduct(${i})">🛒</button>
-            <button class="btn delete" onclick="del(${p.id})">🗑</button>
-          </div>
+        <td colspan="7"
+            class="table-empty">
+
+          No products found
+
         </td>
+
       </tr>
     `;
-  });
+
+    return;
+  }
+
+  body.innerHTML =
+    filtered.map(product => {
+
+      const quantity =
+        Number(product.quantity);
+
+      const price =
+        Number(product.price);
+
+      const status =
+
+        quantity === 0
+
+        ? ["Out of Stock", "red"]
+
+        : quantity <= 5
+
+        ? ["Low Stock", "yellow"]
+
+        : ["In Stock", "green"];
+
+      return `
+
+        <tr>
+
+          <td>
+            ${product.id}
+          </td>
+
+          <td>
+            ${product.name}
+          </td>
+
+          <td>
+            ${
+              product.categories?.name ||
+              "Uncategorized"
+            }
+          </td>
+
+          <td>
+            ${quantity}
+          </td>
+
+          <td>
+            ₱${price.toLocaleString()}
+          </td>
+
+          <td>
+
+            <span class="badge ${status[1]}">
+
+              ${status[0]}
+
+            </span>
+
+          </td>
+
+          <td>
+
+            <div class="actions">
+
+              <button
+                class="btn edit"
+                onclick="openEdit('${product.id}')"
+              >
+
+                Edit
+
+              </button>
+
+              <button
+                class="btn sell"
+                onclick="sellProduct('${product.id}')"
+              >
+
+                Sell
+
+              </button>
+
+              <button
+                class="btn delete"
+                onclick="del('${product.id}')"
+              >
+
+                Delete
+
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+      `;
+    }).join("");
 }
 
-/* ================= ADD / UPDATE PRODUCT ================= */
-function saveProduct() {
-  let name = document.getElementById("name").value.trim();
-  let category = document.getElementById("category").value;
-  let qty = parseInt(document.getElementById("qty").value);
-  let price = parseFloat(document.getElementById("price").value);
+// Open modal
 
-  if (!name || isNaN(qty) || isNaN(price)) {
-    return showToast("Fill all fields properly");
-  }
+function openAdd(){
 
-  if (editIndex !== null) {
-    products[editIndex] = {
-      ...products[editIndex],
-      name,
-      category,
-      qty,
-      price
-    };
-    showToast("Product updated");
-    editIndex = null;
-  } else {
-    products.push({
-      id: Date.now(),
-      name,
-      category,
-      qty,
-      price
-    });
-    showToast("Product added");
-  }
+  editingProductId = null;
 
-  localStorage.setItem("products", JSON.stringify(products));
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Add Product";
 
-  closeModal();
   resetForm();
-  loadProducts();
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
 }
 
-/* ================= DELETE ================= */
-function del(id) {
-  if (!confirm("Delete this product?")) return;
+// Reset form
 
-  products = products.filter(p => p.id !== id);
-  localStorage.setItem("products", JSON.stringify(products));
+function resetForm(){
 
-  showToast("Deleted");
-  loadProducts();
+  document.getElementById(
+    "name"
+  ).value = "";
+
+  document.getElementById(
+    "qty"
+  ).value = "";
+
+  document.getElementById(
+    "price"
+  ).value = "";
 }
 
-/* ================= RESET FORM ================= */
-function resetForm() {
-  document.getElementById("name").value = "";
-  document.getElementById("category").selectedIndex = 0;
-  document.getElementById("qty").value = "";
-  document.getElementById("price").value = "";
+// Close modal
+
+function closeModal(){
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "none";
 }
 
-/* ================= UI ================= */
-function openAdd() {
-  editIndex = null;
-  document.getElementById("modalTitle").innerText = "Add Product";
-  document.getElementById("modal").style.display = "flex";
+// Open edit
+
+function openEdit(id){
+
+  const product =
+    products.find(product =>
+
+      String(product.id) ===
+      String(id)
+    );
+
+  if(!product) return;
+
+  editingProductId =
+    product.id;
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Edit Product";
+
+  document.getElementById(
+    "name"
+  ).value =
+    product.name;
+
+  document.getElementById(
+    "category"
+  ).value =
+    product.category_id;
+
+  document.getElementById(
+    "qty"
+  ).value =
+    product.quantity;
+
+  document.getElementById(
+    "price"
+  ).value =
+    product.price;
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
 }
 
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
+// Save product
+
+async function saveProduct(){
+
+  const name =
+    document.getElementById(
+      "name"
+    ).value.trim();
+
+  const categoryId =
+    document.getElementById(
+      "category"
+    ).value;
+
+  const quantity =
+    Number.parseInt(
+
+      document.getElementById(
+        "qty"
+      ).value,
+
+      10
+    );
+
+  const price =
+    Number.parseFloat(
+
+      document.getElementById(
+        "price"
+      ).value
+    );
+
+  if(
+    !name ||
+    Number.isNaN(quantity) ||
+    Number.isNaN(price)
+  ){
+
+    return showToast(
+      "Fill all fields"
+    );
+  }
+
+  if(!isUuid(categoryId)){
+
+    return showToast(
+      "Invalid category"
+    );
+  }
+
+  const payload = {
+
+    name,
+
+    category_id:
+      categoryId,
+
+    quantity,
+
+    price,
+
+    created_by:
+      currentUser.id
+  };
+
+  try{
+
+    if(editingProductId){
+
+      const { error } =
+        await supabaseClient
+
+          .from("products")
+
+          .update(payload)
+
+          .eq(
+            "id",
+            editingProductId
+          );
+
+      if(error) throw error;
+
+      showToast(
+        "Product updated"
+      );
+
+    }else{
+
+      const { error } =
+        await supabaseClient
+
+          .from("products")
+
+          .insert([payload]);
+
+      if(error) throw error;
+
+      showToast(
+        "Product added"
+      );
+    }
+
+    closeModal();
+
+    await fetchProducts();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+
+      error?.message ||
+
+      "Unable to save product"
+    );
+  }
 }
 
-/* ================= TOAST ================= */
-function showToast(msg) {
-  let t = document.getElementById("toast");
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 2000);
+// Delete
+
+async function del(id){
+
+  if(!confirm(
+    "Delete this product?"
+  )) return;
+
+  try{
+
+    const { error } =
+      await supabaseClient
+
+        .from("products")
+
+        .delete()
+
+        .eq("id", id);
+
+    if(error) throw error;
+
+    showToast(
+      "Product deleted"
+    );
+
+    await fetchProducts();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to delete product"
+    );
+  }
 }
 
-/* ================= LOGOUT ================= */
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
+// Sell
+
+function sellProduct(id){
+
+  selectedProductId = id;
+
+  document.getElementById(
+    "sellModal"
+  ).style.display =
+    "flex";
 }
 
-/* ================= INIT ================= */
-window.addEventListener("load", () => {
-  loadCategoriesDropdown();
-  applySelectedCategory();
-  loadProducts();
-});
+// Close sell
+
+function closeSell(){
+
+  document.getElementById(
+    "sellModal"
+  ).style.display =
+    "none";
+
+  document.getElementById(
+    "buyer"
+  ).value = "";
+
+  document.getElementById(
+    "sellQty"
+  ).value = "";
+}
+
+// Confirm sell
+
+async function confirmSell(){
+
+  const buyer =
+    document.getElementById(
+      "buyer"
+    ).value.trim();
+
+  const quantity =
+    Number.parseInt(
+
+      document.getElementById(
+        "sellQty"
+      ).value,
+
+      10
+    );
+
+  if(
+    !buyer ||
+    Number.isNaN(quantity)
+  ){
+
+    return showToast(
+      "Fill all fields"
+    );
+  }
+
+  const product =
+    products.find(product =>
+
+      String(product.id) ===
+      String(selectedProductId)
+    );
+
+  if(!product){
+
+    return showToast(
+      "Product not found"
+    );
+  }
+
+  if(quantity > product.quantity){
+
+    return showToast(
+      "Not enough stock"
+    );
+  }
+
+  try{
+
+    const remaining =
+      product.quantity -
+      quantity;
+
+    // Update stock
+
+    const { error:updateError } =
+      await supabaseClient
+
+        .from("products")
+
+        .update({
+
+          quantity: remaining
+        })
+
+        .eq(
+          "id",
+          product.id
+        );
+
+    if(updateError)
+      throw updateError;
+
+    // Insert transaction
+
+    await supabaseClient
+
+      .from("transactions")
+
+      .insert([{
+
+        product_id:
+          product.id,
+
+        quantity,
+
+        total:
+          quantity *
+          product.price,
+
+        buyer,
+
+        created_by:
+          currentUser.id
+      }]);
+
+    // Notification
+
+    await supabaseClient
+
+      .from("notifications")
+
+      .insert([{
+
+        title:
+          "Product sold",
+
+        description:
+          `${product.name} → ${buyer}`,
+
+        created_by:
+          currentUser.id
+      }]);
+
+    showToast(
+      "Transaction completed"
+    );
+
+    closeSell();
+
+    await fetchProducts();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to complete sale"
+    );
+  }
+}
+
+// Logout
+
+async function logout(){
+
+  await supabaseClient.auth
+    .signOut();
+
+  window.location.href =
+    "index.html";
+}
+
+// Init
+
+window.addEventListener(
+  "load",
+  async () => {
+
+    const ok =
+      await checkAuth();
+
+    if(!ok) return;
+
+    await fetchCategories();
+
+    await fetchProducts();
+  }
+);

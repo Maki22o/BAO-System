@@ -1,932 +1,352 @@
-/* =========================================
-   SUPABASE CONFIG
-========================================= */
+const SUPABASE_URL = "https://dpdchbusvfktlqjaxdlb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SUPABASE_URL =
-  "https://dpdchbusvfktlqjaxdlb.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
-
-const supabaseClient =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-/* =========================================
-   GLOBALS
-========================================= */
+const OWNER_COLUMNS = ["user_id", "owner_id", "created_by"];
+const CATEGORY_LABEL_COLUMNS = ["name", "category", "title", "label"];
 
 let currentUser = null;
+let ownerColumn = "user_id";
+let barChartInstance = null;
+let pieChartInstance = null;
+let products = [];
+let categories = [];
+let transactions = [];
+let notifications = [];
 
-let barChartInstance;
-let pieChartInstance;
-
-/* =========================================
-   THEME ICON
-========================================= */
-
-function updateThemeIcon(isLight){
-
-  const themeIcon =
-    document.getElementById(
-      "themeIcon"
-    );
-
-  if(!themeIcon) return;
-
-  themeIcon.innerHTML = isLight
-
-  ? `
-
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-
-      <circle cx="12" cy="12" r="5"></circle>
-
-      <line x1="12" y1="1" x2="12" y2="3"></line>
-      <line x1="12" y1="21" x2="12" y2="23"></line>
-
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-
-      <line x1="1" y1="12" x2="3" y2="12"></line>
-
-      <line x1="21" y1="12" x2="23" y2="12"></line>
-
-    </svg>
-
-  `
-
-  : `
-
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-
-      <path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9z"></path>
-
-    </svg>
-
-  `;
+function logSupabaseError(stage, error, context = {}) {
+  console.error(`[Dashboard:${stage}]`, {
+    message: error?.message,
+    details: error?.details,
+    hint: error?.hint,
+    code: error?.code,
+    status: error?.status,
+    context
+  });
 }
 
-/* =========================================
-   THEME SYSTEM
-========================================= */
+function updateThemeIcon(isLight) {
+  const themeIcon = document.getElementById("themeIcon");
+  if (!themeIcon) return;
+  themeIcon.innerHTML = isLight ? `<i data-lucide="sun"></i>` : `<i data-lucide="moon"></i>`;
+  lucide.createIcons();
+}
 
-function initTheme(){
-
-  const savedTheme =
-    localStorage.getItem("theme");
-
-  const isLight =
-    savedTheme === "light";
-
-  if(isLight){
-
-    document.body.classList.add(
-      "light-mode"
-    );
-  }
-
+function initTheme() {
+  const savedTheme = localStorage.getItem("theme");
+  const isLight = savedTheme === "light";
+  if (isLight) document.body.classList.add("light-mode");
   updateThemeIcon(isLight);
-
-  const themeToggle =
-    document.getElementById(
-      "themeToggle"
-    );
-
-  if(themeToggle){
-
-    themeToggle.addEventListener(
-      "click",
-      () => {
-
-        document.body.classList.toggle(
-          "light-mode"
-        );
-
-        const lightMode =
-          document.body.classList.contains(
-            "light-mode"
-          );
-
-        localStorage.setItem(
-          "theme",
-          lightMode
-            ? "light"
-            : "dark"
-        );
-
-        updateThemeIcon(lightMode);
-
-      }
-    );
-  }
+  const toggle = document.getElementById("themeToggle");
+  if (!toggle) return;
+  toggle.addEventListener("click", () => {
+    document.body.classList.toggle("light-mode");
+    const light = document.body.classList.contains("light-mode");
+    localStorage.setItem("theme", light ? "light" : "dark");
+    updateThemeIcon(light);
+  });
 }
 
-/* =========================================
-   AUTH CHECK
-========================================= */
-
-async function checkAuth(){
-
-  try{
-
-    const { data, error } =
-      await supabaseClient.auth.getSession();
-
-    if(error){
-
-      console.error(error);
-
-      window.location.href =
-        "index.html";
-
-      return;
-    }
-
-    const session =
-      data?.session;
-
-    if(!session){
-
-      window.location.href =
-        "index.html";
-
-      return;
-    }
-
-    currentUser = session.user;
-
-    loadUserInfo();
-
-  }catch(error){
-
-    console.error(error);
-
-    window.location.href =
-      "index.html";
-  }
+async function checkAuth() {
+  const ok = await window.initProtectedPageAuth();
+  if (!ok) return false;
+  currentUser = window.appAuth.user;
+  return true;
 }
 
-/* =========================================
-   LOAD USER INFO
-========================================= */
-
-function loadUserInfo(){
-
-  const userName =
-    document.getElementById(
-      "userName"
-    );
-
-  if(!userName || !currentUser)
-    return;
-
+function loadUserInfo() {
+  const el = document.getElementById("userName");
+  const roleEl = document.getElementById("userRoleLabel");
+  const avatarEl = document.querySelector(".user-avatar");
+  if (!el || !currentUser) return;
   const fullName =
-    currentUser.user_metadata
-      ?.fullname;
-
-  userName.innerText =
-    fullName ||
+    window.appAuth.profile?.fullname ||
+    window.appAuth.profile?.full_name ||
+    currentUser.user_metadata?.fullname ||
     currentUser.email ||
     "User";
-}
 
-/* =========================================
-   LOGOUT
-========================================= */
+  el.innerText = fullName;
 
-async function logout(){
-
-  await supabaseClient.auth.signOut();
-
-  window.location.href =
-    "index.html";
-}
-
-/* =========================================
-   MOBILE SIDEBAR
-========================================= */
-
-function toggleSidebar(){
-
-  const sidebar =
-    document.getElementById(
-      "sidebar"
-    );
-
-  const overlay =
-    document.getElementById(
-      "sidebarOverlay"
-    );
-
-  if(!sidebar || !overlay)
-    return;
-
-  sidebar.classList.toggle(
-    "show"
-  );
-
-  overlay.classList.toggle(
-    "show"
-  );
-}
-
-/* =========================================
-   DATA
-========================================= */
-
-function getProducts(){
-
-  return JSON.parse(
-    localStorage.getItem(
-      "products"
-    )
-  ) || [];
-}
-
-function getTransactions(){
-
-  return JSON.parse(
-    localStorage.getItem(
-      "transactions"
-    )
-  ) || [];
-}
-
-function getNotifications(){
-
-  return JSON.parse(
-    localStorage.getItem(
-      "notifications"
-    )
-  ) || [];
-}
-
-/* =========================================
-   SALES
-========================================= */
-
-function getTotalSales(){
-
-  const txns =
-    getTransactions();
-
-  return txns.reduce(
-    (sum, txn) =>
-
-      sum +
-      Number(txn.total || 0),
-
-    0
-  );
-}
-
-function getTotalItemsSold(){
-
-  const txns =
-    getTransactions();
-
-  return txns.reduce(
-    (sum, txn) => {
-
-      if(txn.items){
-
-        return (
-          sum +
-          txn.items.reduce(
-            (s, item) =>
-
-              s +
-              Number(item.qty || 0),
-
-            0
-          )
-        );
-      }
-
-      return (
-        sum +
-        Number(txn.qty || 0)
-      );
-
-    }, 0
-  );
-}
-
-function getTodaySales(){
-
-  const txns =
-    getTransactions();
-
-  const today =
-    new Date().toDateString();
-
-  return txns.reduce(
-    (sum, txn) => {
-
-      const txnDate =
-        new Date(
-          txn.date
-        ).toDateString();
-
-      return txnDate === today
-
-        ? sum +
-          Number(txn.total || 0)
-
-        : sum;
-
-    }, 0
-  );
-}
-
-/* =========================================
-   CHART SETTINGS
-========================================= */
-
-Chart.defaults.color =
-  "#94a3b8";
-
-Chart.defaults.borderColor =
-  "rgba(255,255,255,0.08)";
-
-/* =========================================
-   DASHBOARD STATS
-========================================= */
-
-function updateDashboardStats(){
-
-  const products =
-    getProducts();
-
-  const totalProducts =
-    products.length;
-
-  const lowStock =
-    products.filter(
-      product =>
-        Number(product.qty) <= 5
-    ).length;
-
-  const totalValue =
-    products.reduce(
-      (sum, product) => {
-
-        const price =
-          Number(
-            String(product.price)
-            .replace(/[^\d]/g, "")
-          ) || 0;
-
-        const qty =
-          Number(product.qty) || 0;
-
-        return (
-          sum +
-          (price * qty)
-        );
-
-      }, 0
-    );
-
-  document.getElementById(
-    "totalProducts"
-  ).innerText =
-    totalProducts;
-
-  document.getElementById(
-    "lowStock"
-  ).innerText =
-    lowStock;
-
-  document.getElementById(
-    "totalValue"
-  ).innerText =
-    "₱" +
-    totalValue.toLocaleString();
-
-  document.getElementById(
-    "totalSales"
-  ).innerText =
-    "₱" +
-    getTotalSales()
-    .toLocaleString();
-
-  document.getElementById(
-    "totalItemsSold"
-  ).innerText =
-    getTotalItemsSold();
-
-  document.getElementById(
-    "dailySales"
-  ).innerText =
-    "₱" +
-    getTodaySales()
-    .toLocaleString();
-}
-
-/* =========================================
-   BAR CHART
-========================================= */
-
-function loadBarChart(){
-
-  const canvas =
-    document.getElementById(
-      "barChart"
-    );
-
-  if(!canvas) return;
-
-  const products =
-    getProducts();
-
-  if(barChartInstance){
-
-    barChartInstance.destroy();
+  if (roleEl) {
+    roleEl.innerText =
+      window.mapRoleLabel(window.appAuth.role);
   }
 
-  barChartInstance =
-    new Chart(canvas, {
-
-      type: "bar",
-
-      data: {
-
-        labels:
-          products.map(
-            product =>
-              product.name
-          ),
-
-        datasets: [{
-
-          data:
-            products.map(
-              product =>
-                Number(
-                  product.qty
-                ) || 0
-            ),
-
-          backgroundColor:
-            "#6366f1",
-
-          borderRadius: 8
-        }]
-      },
-
-      options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        plugins: {
-
-          legend: {
-            display: false
-          }
-        },
-
-        scales: {
-
-          x: {
-
-            ticks: {
-              display: false
-            },
-
-            grid: {
-              display: false
-            }
-          },
-
-          y: {
-
-            beginAtZero: true
-          }
-        }
-      }
-    });
+  if (avatarEl) {
+    avatarEl.innerText =
+      String(fullName).trim().charAt(0).toUpperCase() || "U";
+  }
 }
 
-/* =========================================
-   PIE CHART
-========================================= */
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "index.html";
+}
 
-function loadPieChart(){
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  if (!sidebar || !overlay) return;
+  sidebar.classList.toggle("show");
+  overlay.classList.toggle("show");
+}
 
-  const canvas =
-    document.getElementById(
-      "pieChart"
-    );
+function toggleNotif() {
+  const panel = document.getElementById("notifPanel");
+  if (panel) panel.classList.toggle("show");
+}
 
-  if(!canvas) return;
+async function fetchCategories() {
+  const { data, error } = await supabaseClient.from("categories").select("*").limit(1000);
+  if (error) {
+    logSupabaseError("fetchCategories", error);
+    categories = [];
+    return;
+  }
+  categories = (data || []).map((row) => ({
+    id: row.id ?? row.category_id,
+    label: CATEGORY_LABEL_COLUMNS.map((k) => row[k]).find(Boolean) || "Uncategorized"
+  }));
+}
 
-  const products =
-    getProducts();
+function categoryLabelById(id) {
+  const match = categories.find((c) => String(c.id) === String(id));
+  return match?.label || "Uncategorized";
+}
+
+async function fetchOwned(table, selectClause) {
+  let data = null;
+  let error = null;
+  ({ data, error } = await supabaseClient.from(table).select(selectClause).eq(ownerColumn, currentUser.id));
+  if (error) {
+    const msg = `${error.message || ""} ${error.details || ""}`.toLowerCase();
+    if (msg.includes("column") && msg.includes(ownerColumn.toLowerCase())) {
+      ({ data, error } = await supabaseClient.from(table).select(selectClause));
+    }
+  }
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchProducts() {
+  try {
+    const data = await fetchOwned("products", "*");
+    products = data
+      .filter((row) => {
+        const owner = row.user_id ?? row.owner_id ?? row.created_by  ?? null;
+        return !owner || String(owner) === String(currentUser.id);
+      })
+      .map((row) => ({
+        id: row.id,
+        name: row.name ?? row.product_name ?? "Unnamed",
+        qty: Number(row.qty ?? row.quantity ?? row.stock ?? 0),
+        price: Number(row.price ?? row.unit_price ?? 0),
+        category: categoryLabelById(row.category_id),
+        category_id: row.category_id ?? null
+      }));
+  } catch (error) {
+    logSupabaseError("fetchProducts", error, { ownerColumn });
+    products = [];
+  }
+}
+
+async function fetchTransactions() {
+  try {
+    const data = await fetchOwned("transactions", "*");
+    transactions = data
+      .filter((row) => {
+        const owner = row.user_id ?? row.owner_id ?? row.created_by  ?? null;
+        return !owner || String(owner) === String(currentUser.id);
+      })
+      .map((row) => ({
+        id: row.id,
+        name: row.product_name ?? row.name ?? "Unknown",
+        buyer: row.buyer_name ?? row.buyer ?? "N/A",
+        qty: Number(row.qty ?? row.quantity ?? 0),
+        total: Number(row.total ?? row.total_amount ?? 0),
+        date: row.created_at ?? row.date ?? new Date().toISOString()
+      }));
+  } catch (error) {
+    logSupabaseError("fetchTransactions", error, { ownerColumn });
+    transactions = [];
+  }
+}
+
+async function fetchNotifications() {
+  try {
+    const data = await fetchOwned("notifications", "*");
+    notifications = data
+      .filter((row) => {
+        const owner = row.user_id ?? row.owner_id ?? row.created_by  ?? null;
+        return !owner || String(owner) === String(currentUser.id);
+      })
+      .map((row) => ({
+        id: row.id,
+        icon: row.icon ?? "Bell",
+        title: row.title ?? "Notification",
+        desc: row.description ?? row.desc ?? "",
+        created_at: row.created_at ?? new Date().toISOString()
+      }))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } catch (error) {
+    logSupabaseError("fetchNotifications", error, { ownerColumn });
+    notifications = [];
+  }
+}
+
+function getTotalSales() {
+  return transactions.reduce((sum, t) => sum + Number(t.total || 0), 0);
+}
+
+function getTotalItemsSold() {
+  return transactions.reduce((sum, t) => sum + Number(t.qty || 0), 0);
+}
+
+function getTodaySales() {
+  const today = new Date().toDateString();
+  return transactions.reduce((sum, t) => {
+    const d = new Date(t.date).toDateString();
+    return d === today ? sum + Number(t.total || 0) : sum;
+  }, 0);
+}
+
+function updateDashboardStats() {
+  const totalProducts = products.length;
+  const lowStock = products.filter((p) => p.qty <= 5).length;
+  const totalValue = products.reduce((sum, p) => sum + p.price * p.qty, 0);
+
+  document.getElementById("totalProducts").innerText = totalProducts;
+  document.getElementById("lowStock").innerText = lowStock;
+  document.getElementById("totalValue").innerText = `P${totalValue.toLocaleString()}`;
+  document.getElementById("totalSales").innerText = `P${getTotalSales().toLocaleString()}`;
+  document.getElementById("totalItemsSold").innerText = getTotalItemsSold();
+  document.getElementById("dailySales").innerText = `P${getTodaySales().toLocaleString()}`;
+}
+
+function loadBarChart() {
+  const canvas = document.getElementById("barChart");
+  if (!canvas) return;
+  if (barChartInstance) barChartInstance.destroy();
+  barChartInstance = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: products.map((p) => p.name),
+      datasets: [{ data: products.map((p) => p.qty), backgroundColor: "#6366f1", borderRadius: 8 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { display: false }, grid: { display: false } }, y: { beginAtZero: true } }
+    }
+  });
+}
+
+function loadPieChart() {
+  const canvas = document.getElementById("pieChart");
+  if (!canvas) return;
+  if (pieChartInstance) pieChartInstance.destroy();
 
   const categoryMap = {};
-
-  products.forEach(product => {
-
-    const qty =
-      Number(product.qty) || 0;
-
-    categoryMap[
-      product.category
-    ] =
-      (categoryMap[
-        product.category
-      ] || 0) + qty;
+  products.forEach((p) => {
+    categoryMap[p.category] = (categoryMap[p.category] || 0) + Number(p.qty || 0);
   });
 
-  if(pieChartInstance){
-
-    pieChartInstance.destroy();
-  }
-
-  pieChartInstance =
-    new Chart(canvas, {
-
-      type: "doughnut",
-
-      data: {
-
-        labels:
-          Object.keys(
-            categoryMap
-          ),
-
-        datasets: [{
-
-          data:
-            Object.values(
-              categoryMap
-            ),
-
-          backgroundColor: [
-
-            "#6366f1",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444"
-          ],
-
-          borderWidth: 0
-        }]
-      },
-
-      options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        plugins: {
-
-          legend: {
-
-            position: "bottom"
-          }
-        },
-
-        cutout: "68%"
-      }
-    });
-}
-
-/* =========================================
-   LOW STOCK
-========================================= */
-
-function renderLowStock(){
-
-  const container =
-    document.getElementById(
-      "lowStockList"
-    );
-
-  if(!container) return;
-
-  const lowStockProducts =
-    getProducts().filter(
-      product =>
-        Number(product.qty) <= 5
-    );
-
-  container.innerHTML = "";
-
-  if(lowStockProducts.length === 0){
-
-    container.innerHTML =
-      "<p>No low stock items</p>";
-
-    return;
-  }
-
-  lowStockProducts.forEach(
-    product => {
-
-      const qty =
-        Number(product.qty) || 0;
-
-      container.innerHTML += `
-
-        <div class="stock">
-
-          ${product.name}
-
-          <div class="bar">
-
-            <span
-              style="
-                width:
-                ${Math.min(qty * 10,100)}%
-              "
-            ></span>
-
-          </div>
-
-        </div>
-      `;
-    }
-  );
-}
-
-/* =========================================
-   RECENT ACTIVITY
-========================================= */
-
-function renderActivity(){
-
-  const container =
-    document.getElementById(
-      "recentActivity"
-    );
-
-  if(!container) return;
-
-  const txns =
-    getTransactions();
-
-  container.innerHTML = "";
-
-  txns.slice(0, 5)
-  .forEach(txn => {
-
-    container.innerHTML += `
-
-      <div class="txn">
-
-        ${txn.name} sold
-
-        <span>
-
-          ${txn.qty} pcs
-          →
-          ${txn.buyer || "N/A"}
-
-        </span>
-
-      </div>
-    `;
+  pieChartInstance = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(categoryMap),
+      datasets: [{ data: Object.values(categoryMap), backgroundColor: ["#6366f1", "#22c55e", "#f59e0b", "#ef4444"], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } }, cutout: "68%" }
   });
 }
 
-/* =========================================
-   NOTIFICATIONS
-========================================= */
-
-function toggleNotif(){
-
-  const panel =
-    document.getElementById(
-      "notifPanel"
-    );
-
-  if(panel){
-
-    panel.classList.toggle(
-      "show"
-    );
+function renderLowStock() {
+  const container = document.getElementById("lowStockList");
+  if (!container) return;
+  const low = products.filter((p) => Number(p.qty) <= 5);
+  container.innerHTML = "";
+  if (low.length === 0) {
+    container.innerHTML = "<p>No low stock items</p>";
+    return;
   }
+  low.forEach((p) => {
+    const qty = Number(p.qty) || 0;
+    container.innerHTML += `<div class="stock">${p.name}<div class="bar"><span style="width:${Math.min(qty * 10, 100)}%"></span></div></div>`;
+  });
 }
 
-function renderNotifications(){
+function renderActivity() {
+  const container = document.getElementById("recentActivity");
+  if (!container) return;
+  container.innerHTML = "";
+  transactions.slice(0, 5).forEach((t) => {
+    container.innerHTML += `<div class="txn">${t.name} sold<span>${t.qty} pcs -> ${t.buyer || "N/A"}</span></div>`;
+  });
+}
 
-  const notifications =
-    getNotifications();
-
-  const list =
-    document.getElementById(
-      "notifList"
-    );
-
-  const badge =
-    document.getElementById(
-      "notifDot"
-    );
-
-  if(!list || !badge)
-    return;
+function renderNotifications() {
+  const list = document.getElementById("notifList");
+  const badge = document.getElementById("notifDot");
+  if (!list || !badge) return;
 
   list.innerHTML = "";
-
-  if(notifications.length === 0){
-
-    list.innerHTML = `
-
-      <div class="notif-empty">
-        No notifications
-      </div>
-    `;
-
-    badge.style.display =
-      "none";
-
+  if (notifications.length === 0) {
+    list.innerHTML = `<div class="notif-empty">No notifications</div>`;
+    badge.style.display = "none";
     return;
   }
 
-  badge.style.display =
-    "flex";
+  badge.style.display = "flex";
+  badge.innerText = notifications.length;
 
-  badge.innerText =
-    notifications.length;
-
-  notifications.forEach(
-    notification => {
-
-      list.innerHTML += `
-
-        <div class="notif-item">
-
-          <div class="notif-icon">
-
-            ${
-              notification.icon ||
-              "🔔"
-            }
-
-          </div>
-
-          <div class="notif-content">
-
-            <div class="notif-title">
-
-              ${notification.title}
-
-            </div>
-
-            <div class="notif-desc">
-
-              ${notification.desc}
-
-            </div>
-
-          </div>
-
-        </div>
-      `;
-    }
-  );
+  notifications.forEach((n) => {
+    list.innerHTML += `<div class="notif-item"><div class="notif-icon">${n.icon}</div><div class="notif-content"><div class="notif-title">${n.title}</div><div class="notif-desc">${n.desc}</div></div></div>`;
+  });
 }
 
-function clearNotif(){
-
-  localStorage.removeItem(
-    "notifications"
-  );
-
+async function clearNotif() {
+  try {
+    await supabaseClient.from("notifications").delete().eq(ownerColumn, currentUser.id);
+  } catch (error) {
+    logSupabaseError("clearNotifications", error);
+  }
+  notifications = [];
   renderNotifications();
+  showToast("Notifications cleared");
+}
 
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerText = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+async function refreshDashboardData() {
+  await fetchCategories();
+  await fetchProducts();
+  await fetchTransactions();
+  await fetchNotifications();
+  updateDashboardStats();
+  loadBarChart();
+  loadPieChart();
+  renderNotifications();
+  renderLowStock();
   renderActivity();
-
-  showToast(
-    "Notifications cleared"
-  );
 }
 
-/* =========================================
-   TOAST
-========================================= */
-
-function showToast(message){
-
-  const toast =
-    document.createElement(
-      "div"
-    );
-
-  toast.className =
-    "toast";
-
-  toast.innerText =
-    message;
-
-  document.body.appendChild(
-    toast
-  );
-
+window.addEventListener("load", async () => {
+  initTheme();
+  const ok = await checkAuth();
+  if (!ok) return;
+  loadUserInfo();
+  await refreshDashboardData();
   setTimeout(() => {
-
-    toast.classList.add(
-      "show"
-    );
-
-  }, 100);
-
-  setTimeout(() => {
-
-    toast.remove();
-
-  }, 3000);
-}
-
-/* =========================================
-   AUTO UPDATE
-========================================= */
-
-window.addEventListener(
-  "storage",
-  () => {
-
-    updateDashboardStats();
-
-    loadBarChart();
-
-    loadPieChart();
-
-    renderNotifications();
-
-    renderLowStock();
-
-    renderActivity();
-  }
-);
-
-/* =========================================
-   INITIALIZATION
-========================================= */
-
-window.addEventListener(
-  "load",
-  async () => {
-
-    initTheme();
-
-    await checkAuth();
-
-    updateDashboardStats();
-
-    loadBarChart();
-
-    loadPieChart();
-
-    renderNotifications();
-
-    renderLowStock();
-
-    renderActivity();
-
-    setTimeout(() => {
-
-      showToast(
-
-        `Welcome back, ${
-          currentUser?.user_metadata
-            ?.fullname ||
-
-          currentUser?.email ||
-
-          "User"
-        } 👋`
-      );
-
-    }, 800);
-  }
-);
+    showToast(`Welcome back, ${currentUser?.user_metadata?.fullname || currentUser?.email || "User"}`);
+  }, 800);
+});

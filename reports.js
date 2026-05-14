@@ -1,198 +1,166 @@
-if (!window.currentUser) {
-  window.currentUser = JSON.parse(localStorage.getItem("currentUser"));
-}
+const SUPABASE_URL = "https://dpdchbusvfktlqjaxdlb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-if (!window.currentUser) {
-  window.location.href = "index.html";
-}
+const OWNER_COLUMNS = ["user_id", "owner_id", "created_by"];
 
-let chart;
+let currentUser = null;
+let ownerColumn = "user_id";
+let chart = null;
+let normalized = [];
 
-/* ================= GET DATA ================= */
-function getTransactions() {
-  return JSON.parse(localStorage.getItem("transactions")) || [];
-}
-
-/* ================= NORMALIZE ================= */
-function normalizeTransactions(txns) {
-  let normalized = [];
-
-  txns.forEach(t => {
-
-    // NEW FORMAT
-    if (t.items) {
-      t.items.forEach(i => {
-        normalized.push({
-          name: i.name || "Unknown",
-          qty: Number(i.qty || 0),
-          total: Number(i.qty || 0) * Number(i.price || 0),
-          date: t.date
-        });
-      });
-    } 
-    // OLD FORMAT
-    else {
-      normalized.push({
-        name: t.name || "Unknown",
-        qty: Number(t.qty || 0),
-        total: Number(t.total || 0),
-        date: t.date
-      });
-    }
-
+function logSupabaseError(stage, error, context = {}) {
+  console.error(`[Reports:${stage}]`, {
+    message: error?.message,
+    details: error?.details,
+    hint: error?.hint,
+    code: error?.code,
+    status: error?.status,
+    context
   });
-
-  return normalized;
 }
 
-/* ================= SAFE GET ================= */
+async function checkAuth() {
+  const ok = await window.initProtectedPageAuth();
+  if (!ok) return false;
+  currentUser = window.appAuth.user;
+  return true;
+}
+
+async function fetchOwned(table, selectClause) {
+  let data = null;
+  let error = null;
+  ({ data, error } = await supabaseClient.from(table).select(selectClause).eq(ownerColumn, currentUser.id));
+  if (error) {
+    const msg = `${error.message || ""} ${error.details || ""}`.toLowerCase();
+    if (msg.includes("column") && msg.includes(ownerColumn.toLowerCase())) {
+      ({ data, error } = await supabaseClient.from(table).select(selectClause));
+    }
+  }
+  if (error) throw error;
+  return data || [];
+}
+
+function normalizeTransactions(rows) {
+  return rows
+    .filter((row) => {
+      const owner = row.user_id ?? row.owner_id ?? row.created_by  ?? null;
+      return !owner || String(owner) === String(currentUser.id);
+    })
+    .map((row) => ({
+      name: row.product_name ?? row.name ?? "Unknown",
+      qty: Number(row.qty ?? row.quantity ?? 0),
+      total: Number(row.total ?? row.total_amount ?? 0),
+      date: row.created_at ?? row.date ?? new Date().toISOString()
+    }));
+}
+
 function getEl(id) {
   return document.getElementById(id);
 }
 
-/* ================= LOAD REPORT ================= */
-function loadReports() {
+function logout() {
+  supabaseClient.auth.signOut().finally(() => {
+    window.location.href = "index.html";
+  });
+}
 
-  let raw = getTransactions();
-  let transactions = normalizeTransactions(raw);
+async function loadReports() {
+  try {
+    const rows = await fetchOwned("transactions", "*");
+    normalized = normalizeTransactions(rows);
+  } catch (error) {
+    logSupabaseError("loadTransactions", error, { ownerColumn });
+    normalized = [];
+  }
 
-  let start = getEl("startDate")?.value;
-  let end = getEl("endDate")?.value;
+  const start = getEl("startDate")?.value;
+  const end = getEl("endDate")?.value;
+  const startDate = start ? new Date(`${start}T00:00:00`) : null;
+  const endDate = end ? new Date(`${end}T23:59:59`) : null;
 
-  let startDate = start ? new Date(start + "T00:00:00") : null;
-  let endDate = end ? new Date(end + "T23:59:59") : null;
-
-  let filtered = transactions.filter(t => {
-    let d = new Date(t.date);
-
+  let filtered = normalized.filter((t) => {
+    const d = new Date(t.date);
     if (isNaN(d)) return false;
-
     if (startDate && d < startDate) return false;
     if (endDate && d > endDate) return false;
-
     return true;
   });
 
-  if (filtered.length === 0 && transactions.length > 0) {
-    filtered = transactions;
-  }
+  if (filtered.length === 0 && normalized.length > 0) filtered = normalized;
 
-  /* ================= STATS ================= */
-  let totalSales = filtered.reduce((sum, t) => sum + Number(t.total || 0), 0);
-  let totalTxns = filtered.length;
-  let avg = totalTxns ? totalSales / totalTxns : 0;
+  const totalSales = filtered.reduce((sum, t) => sum + Number(t.total || 0), 0);
+  const totalTxns = filtered.length;
+  const avg = totalTxns ? totalSales / totalTxns : 0;
 
-  if (getEl("totalSales"))
-    getEl("totalSales").innerText = "₱" + totalSales.toLocaleString();
+  if (getEl("totalSales")) getEl("totalSales").innerText = `P${totalSales.toLocaleString()}`;
+  if (getEl("totalTxns")) getEl("totalTxns").innerText = totalTxns;
+  if (getEl("avgSale")) getEl("avgSale").innerText = `P${avg.toFixed(2)}`;
 
-  if (getEl("totalTxns"))
-    getEl("totalTxns").innerText = totalTxns;
-
-  if (getEl("avgSale"))
-    getEl("avgSale").innerText = "₱" + avg.toFixed(2);
-
-  /* ================= PRODUCT PERFORMANCE ================= */
-  let map = {};
-
-  filtered.forEach(t => {
-    let name = t.name || "Unknown";
-
-    if (!map[name]) {
-      map[name] = { qty: 0, revenue: 0 };
-    }
-
-    map[name].qty += Number(t.qty || 0);
-    map[name].revenue += Number(t.total || 0);
+  const map = {};
+  filtered.forEach((t) => {
+    if (!map[t.name]) map[t.name] = { qty: 0, revenue: 0 };
+    map[t.name].qty += Number(t.qty || 0);
+    map[t.name].revenue += Number(t.total || 0);
   });
 
-  let table = getEl("reportTable");
+  const table = getEl("reportTable");
   if (table) {
     table.innerHTML = "";
-
-    let sorted = Object.entries(map).sort((a, b) => b[1].qty - a[1].qty);
-
-    if (sorted.length === 0) {
-      table.innerHTML = `<tr><td colspan="3">No data</td></tr>`;
-    }
-
+    const sorted = Object.entries(map).sort((a, b) => b[1].qty - a[1].qty);
+    if (sorted.length === 0) table.innerHTML = `<tr><td colspan="3">No data</td></tr>`;
     sorted.forEach(([name, data]) => {
-      table.innerHTML += `
-        <tr>
-          <td>${name}</td>
-          <td>${data.qty}</td>
-          <td>₱${data.revenue.toLocaleString()}</td>
-        </tr>
-      `;
+      table.innerHTML += `<tr><td>${name}</td><td>${data.qty}</td><td>P${data.revenue.toLocaleString()}</td></tr>`;
     });
 
-    /* ================= INSIGHTS ================= */
-    let insights = getEl("insights");
+    const insights = getEl("insights");
     if (insights) {
       insights.innerHTML = "";
-
-      if (sorted.length > 0) {
-        insights.innerHTML += `<p>Top Product: <b>${sorted[0][0]}</b></p>`;
-      }
-
-      if (sorted.length > 1) {
-        let last = sorted[sorted.length - 1][0];
-        insights.innerHTML += `<p>Low Performing: <b>${last}</b></p>`;
-      }
-
-      if (totalSales === 0) {
-        insights.innerHTML += `<p>No sales in selected range</p>`;
-      }
-
-      if (totalSales > 0) {
-        insights.innerHTML += `<p>Total Revenue: ₱${totalSales.toLocaleString()}</p>`;
-      }
+      if (sorted.length > 0) insights.innerHTML += `<p>Top Product: <b>${sorted[0][0]}</b></p>`;
+      if (sorted.length > 1) insights.innerHTML += `<p>Low Performing: <b>${sorted[sorted.length - 1][0]}</b></p>`;
+      if (totalSales === 0) insights.innerHTML += `<p>No sales in selected range</p>`;
+      if (totalSales > 0) insights.innerHTML += `<p>Total Revenue: P${totalSales.toLocaleString()}</p>`;
     }
   }
 
-  /* ================= CHART ================= */
-  let canvas = getEl("salesChart");
+  const canvas = getEl("salesChart");
+  if (!canvas) return;
 
-  if (canvas) {
-    let daily = {};
+  const daily = {};
+  filtered.forEach((t) => {
+    const d = new Date(t.date).toLocaleDateString();
+    if (!daily[d]) daily[d] = 0;
+    daily[d] += Number(t.total || 0);
+  });
 
-    filtered.forEach(t => {
-      let d = new Date(t.date).toLocaleDateString();
-      if (!daily[d]) daily[d] = 0;
-      daily[d] += Number(t.total || 0);
-    });
+  const labels = Object.keys(daily);
+  const values = Object.values(daily);
+  if (chart) chart.destroy();
 
-    let labels = Object.keys(daily);
-    let values = Object.values(daily);
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(canvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99,102,241,0.2)",
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: {
-            beginAtZero: true,
-            grid: { color: "rgba(255,255,255,0.05)" }
-          }
-        }
+  chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99,102,241,0.2)",
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.05)" } }
       }
-    });
-  }
+    }
+  });
 }
 
-/* ================= EVENTS ================= */
-window.addEventListener("storage", loadReports);
-window.addEventListener("focus", loadReports);
-window.onload = loadReports;
+window.addEventListener("load", async () => {
+  const ok = await checkAuth();
+  if (!ok) return;
+  await loadReports();
+});

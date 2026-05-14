@@ -1,106 +1,125 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+const SUPABASE_URL = "https://dpdchbusvfktlqjaxdlb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-if (!currentUser) {
-  window.location.href = "index.html";
-}
-
-if (currentUser.role !== "admin") {
-  let adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) adminLink.style.display = "none";
-}
-
+const OWNER_COLUMNS = ["user_id", "owner_id", "created_by"];
+let currentUser = null;
+let ownerColumn = "user_id";
 let allTransactions = [];
 let filteredData = [];
 let currentIndex = 0;
-let batchSize = 10;
+const batchSize = 20;
 
-/* ================= DATA ================= */
-function getTransactions() {
-  return JSON.parse(localStorage.getItem("transactions")) || [];
+function logSupabaseError(stage, error, context = {}) {
+  console.error(`[Transactions:${stage}]`, {
+    message: error?.message,
+    details: error?.details,
+    hint: error?.hint,
+    code: error?.code,
+    status: error?.status,
+    context
+  });
 }
 
-/* ================= NORMALIZE ================= */
-function normalizeTransaction(t) {
+async function checkAuth() {
+  const ok = await window.initProtectedPageAuth();
+  if (!ok) return false;
+  currentUser = window.appAuth.user;
+  return true;
+}
 
-  let products = JSON.parse(localStorage.getItem("products")) || [];
-
-  //  hanapin matching product
-  let matchedProduct = products.find(p => 
-    p.name?.toLowerCase() === (t.name || "").toLowerCase()
-  );
-
-  // 🔥 NEW FORMAT (items array)
-  if (t.items) {
-    let totalQty = t.items.reduce((s, i) => s + Number(i.qty || 0), 0);
-    let firstItem = t.items[0] || {};
-
-    let itemMatch = products.find(p =>
-      p.name?.toLowerCase() === (firstItem.name || "").toLowerCase()
-    );
-
-    return {
-      id: t.id || Date.now(),
-      name: t.items.map(i => i.name).join(", "),
-      category: firstItem.category 
-        || itemMatch?.category 
-        || "Uncategorized", // ✅ FIX
-      buyer: t.buyer || "N/A",
-      qty: totalQty,
-      total: Number(t.total || 0),
-      date: t.date
-    };
-  }
-
-  // 🔥 OLD FORMAT
+function normalizeTransaction(row) {
   return {
-    id: t.id || Date.now(),
-    name: t.name || "Unknown",
-
-    // 🔥 MAIN FIX HERE
-    category: t.category 
-      || matchedProduct?.category 
-      || "Uncategorized",
-
-    buyer: t.buyer || "N/A",
-    qty: Number(t.qty || 0),
-    total: Number(t.total || 0),
-    date: t.date
+    id: row.id,
+    name: row.products?.name,
+    category: row.products?.categories?.name,
+    buyer: row.buyer_name ?? row.buyer ?? "",
+    qty: Number(row.qty ?? row.quantity ?? 0),
+    total: Number(row.total ?? row.total_amount ?? 0),
+    date: row.created_at ?? row.date
   };
 }
 
-/* ================= NOTIFICATION ================= */
-function pushNotification(icon, title, desc) {
-  let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+async function fetchTransactions() {
+  try {
+    let rows = [];
+    let error = null;
 
-  notifications.unshift({
-    icon,
-    title,
-    desc,
-    time: new Date().toISOString()
-  });
+    ({
+      data: rows,
+      error
+    } = await supabaseClient
+      .from("transactions")
+      .select(`
+        *,
+        products:product_id!inner (
+          id,
+          name,
+          category_id,
+          categories:category_id!inner (
+            id,
+            name
+          )
+        )
+      `)
+      .eq(ownerColumn, currentUser.id));
 
-  localStorage.setItem("notifications", JSON.stringify(notifications));
+    if (error) {
+      const msg = `${error.message || ""} ${error.details || ""}`.toLowerCase();
+      if (msg.includes("column") && msg.includes(ownerColumn.toLowerCase())) {
+        ({
+          data: rows,
+          error
+        } = await supabaseClient
+          .from("transactions")
+          .select(`
+            *,
+            products:product_id!inner (
+              id,
+              name,
+              category_id,
+              categories:category_id!inner (
+                id,
+                name
+              )
+            )
+          `));
+      }
+    }
+
+    if (error) throw error;
+
+    allTransactions = rows
+      .filter((row) => {
+        const owner = row.user_id ?? row.owner_id ?? row.created_by ?? null;
+        return !owner || String(owner) === String(currentUser.id);
+      })
+      .map(normalizeTransaction)
+      .filter((t) => t.name && t.category && t.date)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  } catch (error) {
+    logSupabaseError("fetchTransactions", error, { ownerColumn });
+    allTransactions = [];
+    showToast("Unable to load transactions");
+  }
 }
 
-/* ================= CATEGORY ================= */
-function loadCategories() {
-  let filter = document.getElementById("filter");
+function loadCategoriesFilter() {
+  const filter = document.getElementById("filter");
   if (!filter) return;
-
-  let transactions = getTransactions().map(normalizeTransaction);
-
-  let uniqueCategories = [...new Set(
-    transactions.map(t => t.category || "Others")
-  )];
+  const current = filter.value;
+  const unique = [...new Set(allTransactions.map((t) => t.category).filter(Boolean))];
 
   filter.innerHTML = `<option value="All">All Categories</option>`;
-
-  uniqueCategories.forEach(cat => {
+  unique.forEach((cat) => {
     filter.innerHTML += `<option value="${cat}">${cat}</option>`;
   });
+
+  if (current && [...filter.options].some((o) => o.value === current)) {
+    filter.value = current;
+  }
 }
 
-/* ================= FORMAT ================= */
 function formatDate(date) {
   return new Date(date).toLocaleDateString();
 }
@@ -109,52 +128,45 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString();
 }
 
-/* ================= RENDER ================= */
 function resetAndRender() {
   currentIndex = 0;
-  document.getElementById("tableBody").innerHTML = "";
+  const body = document.getElementById("tableBody");
+  if (body) body.innerHTML = "";
   renderTable();
 }
 
 function renderTable() {
-  let search = document.getElementById("search")?.value.toLowerCase() || "";
-  let filter = document.getElementById("filter")?.value || "All";
-  let from = document.getElementById("dateFrom")?.value;
-  let to = document.getElementById("dateTo")?.value;
+  const search = document.getElementById("search")?.value.toLowerCase() || "";
+  const filter = document.getElementById("filter")?.value || "All";
+  const from = document.getElementById("dateFrom")?.value;
+  const to = document.getElementById("dateTo")?.value;
 
-  allTransactions = getTransactions().map(normalizeTransaction);
-
-  filteredData = allTransactions.filter(t => {
-    let matchSearch = (t.name || "").toLowerCase().includes(search);
-    let matchFilter = filter === "All" || t.category === filter;
-
-    let txnDate = new Date(t.date);
+  filteredData = allTransactions.filter((t) => {
+    const matchSearch = (t.name || "").toLowerCase().includes(search);
+    const matchFilter = filter === "All" || t.category === filter;
+    const txnDate = new Date(t.date);
     let matchDate = true;
-
     if (from) matchDate = txnDate >= new Date(from);
-    if (to) matchDate = matchDate && txnDate <= new Date(to);
-
+    if (to) matchDate = matchDate && txnDate <= new Date(`${to}T23:59:59`);
     return matchSearch && matchFilter && matchDate;
   });
 
   loadMore();
 }
 
-/* ================= LOAD MORE ================= */
 function loadMore() {
-  let body = document.getElementById("tableBody");
-  let empty = document.getElementById("emptyState");
+  const body = document.getElementById("tableBody");
+  const empty = document.getElementById("emptyState");
+  if (!body || !empty) return;
 
-  let nextData = filteredData.slice(currentIndex, currentIndex + batchSize);
-
+  const nextData = filteredData.slice(currentIndex, currentIndex + batchSize);
   if (filteredData.length === 0) {
-    if (empty) empty.style.display = "block";
+    empty.style.display = "block";
     return;
-  } else {
-    if (empty) empty.style.display = "none";
   }
+  empty.style.display = "none";
 
-  nextData.forEach(t => {
+  nextData.forEach((t) => {
     body.innerHTML += `
       <tr>
         <td>${t.id}</td>
@@ -162,55 +174,43 @@ function loadMore() {
         <td>${t.category}</td>
         <td>${t.buyer}</td>
         <td>${t.qty}</td>
-        <td>₱${t.total.toLocaleString()}</td>
+        <td>P${t.total.toLocaleString()}</td>
         <td>${formatDate(t.date)}</td>
         <td>${formatTime(t.date)}</td>
       </tr>
     `;
   });
-
   currentIndex += batchSize;
 }
 
-/* ================= SCROLL ================= */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.innerText = msg;
+  t.style.display = "block";
+  setTimeout(() => (t.style.display = "none"), 2200);
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "index.html";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("tableContainer");
-
   if (container) {
     container.addEventListener("scroll", () => {
-      if (
-        container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 10
-      ) {
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
         loadMore();
       }
     });
   }
 });
 
-/* ================= UI ================= */
-function showToast(msg) {
-  let t = document.getElementById("toast");
-  if (!t) return;
-
-  t.innerText = msg;
-  t.style.display = "block";
-
-  setTimeout(() => t.style.display = "none", 2000);
-}
-
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
-}
-
-/* ================= EVENTS ================= */
-window.addEventListener("storage", () => {
-  loadCategories();
-  resetAndRender();
-});
-
-window.addEventListener("load", () => {
-  loadCategories();
+window.addEventListener("load", async () => {
+  const ok = await checkAuth();
+  if (!ok) return;
+  await fetchTransactions();
+  loadCategoriesFilter();
   resetAndRender();
 });

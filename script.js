@@ -332,7 +332,7 @@ async function register(button){
 
   try{
 
-    const { error } =
+    const { data, error } =
       await supabaseClient.auth
       .signUp({
 
@@ -361,6 +361,44 @@ async function register(button){
       }
 
       return;
+    }
+
+    const userId =
+      data?.user?.id;
+
+    if(userId){
+
+      let result =
+        await supabaseClient
+          .from("profiles")
+          .upsert([{
+            id: userId,
+            email,
+            fullname: fullName,
+            role: "regular_user",
+            avatar_url: null
+          }], {
+            onConflict: "id"
+          });
+
+      if(result.error){
+        result =
+          await supabaseClient
+            .from("profiles")
+            .upsert([{
+              id: userId,
+              email,
+              full_name: fullName,
+              role: "regular_user",
+              avatar_url: null
+            }], {
+              onConflict: "id"
+            });
+      }
+
+      if(result.error){
+        console.error(result.error);
+      }
     }
 
     showToast(

@@ -1,56 +1,133 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+let profiles = [];
+let logs = [];
+let editId = null;
 
-if (!currentUser || currentUser.role !== "admin") {
-  alert("Admin access only");
-  window.location.href = "dashboard.html";
+function logSupabaseError(stage, error, context = {}) {
+  console.error(`[UserManagement:${stage}]`, {
+    message: error?.message,
+    details: error?.details,
+    hint: error?.hint,
+    code: error?.code,
+    status: error?.status,
+    context
+  });
 }
 
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let logs = JSON.parse(localStorage.getItem("logs")) || [];
-let editIndex = null;
+function roleLabel(role) {
+  return role === "admin_user" ? "System Admin" : "Regular User";
+}
 
-function initAdmin() {
-  if (users.length === 0) {
-    users.push({
-      username: "admin",
-      password: "admin123",
-      role: "admin",
-      status: "active"
-    });
-    localStorage.setItem("users", JSON.stringify(users));
+function roleBadgeClass(role) {
+  return role === "admin_user" ? "admin" : "staff";
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.innerText = msg;
+  toast.style.display = "block";
+  setTimeout(() => (toast.style.display = "none"), 2300);
+}
+
+async function logout() {
+  await window.appSupabase.auth.signOut();
+  window.location.href = "index.html";
+}
+
+function openModal() {
+  document.getElementById("modal").style.display = "flex";
+  if (!editId) {
+    document.getElementById("modalTitle").innerText = "Add Profile";
+    document.getElementById("fullName").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("role").value = "regular_user";
   }
 }
 
-function addLog(text) {
-  logs.unshift({
-    text,
-    time: new Date().toLocaleString()
-  });
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
 
-  localStorage.setItem("logs", JSON.stringify(logs));
+async function addLog(text) {
+  const payload = {
+    created_by: window.appAuth.user.id,
+    text
+  };
+  const { error } = await window.appSupabase.from("logs").insert([payload]);
+  if (error) logSupabaseError("addLog", error, { text });
+}
+
+async function fetchLogs() {
+  const { data, error } = await window.appSupabase
+    .from("logs")
+    .select("*")
+    .eq("created_by", window.appAuth.user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    logSupabaseError("fetchLogs", error);
+    logs = [];
+    return;
+  }
+  logs = data || [];
+}
+
+function renderLogs() {
+  const logList = document.getElementById("logList");
+  if (!logList) return;
+  logList.innerHTML = logs
+    .map((l) => `<p>${l.text || l.message || ""} <br><small>${new Date(l.created_at || l.time || Date.now()).toLocaleString()}</small></p>`)
+    .join("");
+}
+
+async function fetchProfiles() {
+  const { data, error } = await window.appSupabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logSupabaseError("fetchProfiles", error);
+    profiles = [];
+    showToast("Unable to load users");
+    return;
+  }
+  profiles = data || [];
+}
+
+function updateStats() {
+  const total = profiles.length;
+  const admins = profiles.filter((p) => p.role === "admin_user").length;
+  const regular = total - admins;
+  document.getElementById("totalUsers").innerText = total;
+  document.getElementById("totalAdmins").innerText = admins;
+  document.getElementById("totalStaff").innerText = regular;
 }
 
 function renderUsers() {
-  let table = document.getElementById("userTable");
+  const table = document.getElementById("userTable");
+  const query = (document.getElementById("userSearch")?.value || "").toLowerCase();
+  if (!table) return;
   table.innerHTML = "";
 
-  users.forEach((u, i) => {
+  const filtered = profiles.filter((p) => {
+    const fullName = (p.fullname || p.full_name || "").toLowerCase();
+    const email = (p.email || "").toLowerCase();
+    return fullName.includes(query) || email.includes(query);
+  });
+
+  filtered.forEach((p) => {
     table.innerHTML += `
       <tr>
-        <td>${u.username}</td>
-        <td>••••••••</td>
-        <td><span class="badge ${u.role}">${u.role}</span></td>
-        <td>${u.status || "active"}</td>
+        <td>${p.fullname || p.full_name || "-"}</td>
+        <td>${p.email || "-"}</td>
+        <td><span class="badge ${roleBadgeClass(p.role)}">${roleLabel(p.role)}</span></td>
+        <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : "-"}</td>
         <td class="actions">
-          <button class="edit" onclick="editUser(${i})">Edit</button>
-
-          <button onclick="toggleStatus(${i})">
-            ${u.status === "disabled" ? "Enable" : "Disable"}
-          </button>
-
-          <button onclick="changePassword(${i})">Password</button>
-
-          <button class="delete" onclick="deleteUser(${i})">Delete</button>
+          <button class="edit" onclick="editUser('${p.id}')">Edit</button>
+          <button onclick="toggleRole('${p.id}')">Toggle Role</button>
+          <button class="delete" onclick="deleteUser('${p.id}')">Delete</button>
         </td>
       </tr>
     `;
@@ -60,152 +137,117 @@ function renderUsers() {
   renderLogs();
 }
 
-function saveUser() {
-  let username = document.getElementById("username").value.trim();
-  let password = document.getElementById("password").value.trim();
-  let role = document.getElementById("role").value;
+function editUser(id) {
+  const profile = profiles.find((p) => String(p.id) === String(id));
+  if (!profile) return;
+  editId = profile.id;
+  document.getElementById("modalTitle").innerText = "Edit Profile";
+  document.getElementById("fullName").value = profile.fullname || profile.full_name || "";
+  document.getElementById("email").value = profile.email || "";
+  document.getElementById("role").value = profile.role || "regular_user";
+  openModal();
+}
 
-  if (!username || !password) {
+async function saveUser() {
+  const fullName = document.getElementById("fullName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const role = document.getElementById("role").value;
+
+  if (!fullName || !email) {
     showToast("Fill all fields");
     return;
   }
 
-  if (editIndex !== null) {
-    users[editIndex] = {
-      ...users[editIndex],
-      username,
-      password,
-      role
-    };
-    addLog(`Updated user: ${username}`);
-    showToast("User updated");
-  } else {
-    users.push({
-      username,
-      password,
-      role,
-      status: "active"
-    });
-    addLog(`Added user: ${username}`);
-    showToast("User added");
+  try {
+    if (editId) {
+      let result =
+        await window.appSupabase
+          .from("profiles")
+          .update({
+            fullname: fullName,
+            email,
+            role
+          })
+          .eq("id", editId);
+
+      if(result.error){
+        result =
+          await window.appSupabase
+            .from("profiles")
+            .update({
+              full_name: fullName,
+              email,
+              role
+            })
+            .eq("id", editId);
+      }
+
+      if (result.error) throw result.error;
+      await addLog(`Updated profile: ${email}`);
+      showToast("Profile updated");
+    } else {
+      showToast("Select a user row to edit");
+      return;
+    }
+
+    editId = null;
+    closeModal();
+    await refreshAll();
+  } catch (error) {
+    logSupabaseError("saveUser", error, { editId, email, role });
+    showToast(error?.message ? `Unable to save: ${error.message}` : "Unable to save profile");
   }
+}
 
-  localStorage.setItem("users", JSON.stringify(users));
+async function toggleRole(id) {
+  const profile = profiles.find((p) => String(p.id) === String(id));
+  if (!profile) return;
+  const nextRole = profile.role === "admin_user" ? "regular_user" : "admin_user";
 
-  editIndex = null;
-  closeModal();
+  try {
+    const { error } = await window.appSupabase
+      .from("profiles")
+      .update({ role: nextRole })
+      .eq("id", id);
+    if (error) throw error;
+    await addLog(`Changed role for ${profile.email} to ${roleLabel(nextRole)}`);
+    showToast("Role updated");
+    await refreshAll();
+  } catch (error) {
+    logSupabaseError("toggleRole", error, { id, nextRole });
+    showToast("Unable to update role");
+  }
+}
+
+async function deleteUser(id) {
+  const profile = profiles.find((p) => String(p.id) === String(id));
+  if (!profile) return;
+  if (!confirm(`Delete profile for ${profile.email}?`)) return;
+
+  try {
+    const { error } = await window.appSupabase.from("profiles").delete().eq("id", id);
+    if (error) throw error;
+    await addLog(`Deleted profile: ${profile.email}`);
+    showToast("Profile deleted");
+    await refreshAll();
+  } catch (error) {
+    logSupabaseError("deleteUser", error, { id });
+    showToast("Unable to delete profile");
+  }
+}
+
+async function refreshAll() {
+  await fetchProfiles();
+  await fetchLogs();
   renderUsers();
 }
 
-function editUser(index) {
-  let u = users[index];
-
-  document.getElementById("username").value = u.username;
-  document.getElementById("password").value = u.password;
-  document.getElementById("role").value = u.role;
-
-  document.getElementById("modalTitle").innerText = "Edit User";
-
-  editIndex = index;
-  openModal();
-}
-
-function deleteUser(index) {
-  if (users[index].username === "admin") {
-    showToast("Cannot delete main admin");
+window.addEventListener("load", async () => {
+  const ok = await window.initProtectedPageAuth();
+  if (!ok) return;
+  if (!window.isAdminRole(window.appAuth.role)) {
+    window.location.href = "dashboard.html";
     return;
   }
-
-  addLog(`Deleted user: ${users[index].username}`);
-
-  users.splice(index, 1);
-  localStorage.setItem("users", JSON.stringify(users));
-
-  renderUsers();
-  showToast("User deleted");
-}
-
-function toggleStatus(index) {
-  let user = users[index];
-
-  user.status = user.status === "disabled" ? "active" : "disabled";
-
-  addLog(`${user.username} is now ${user.status}`);
-
-  localStorage.setItem("users", JSON.stringify(users));
-  renderUsers();
-}
-
-function changePassword(index) {
-  let newPass = prompt("Enter new password:");
-
-  if (newPass) {
-    users[index].password = newPass;
-    addLog(`Password changed for ${users[index].username}`);
-
-    localStorage.setItem("users", JSON.stringify(users));
-    showToast("Password updated");
-  }
-}
-
-function updateStats() {
-  document.getElementById("totalUsers").innerText = users.length;
-
-  document.getElementById("totalAdmins").innerText =
-    users.filter(u => u.role === "admin").length;
-
-  document.getElementById("totalStaff").innerText =
-    users.filter(u => u.role === "staff").length;
-}
-
-function renderLogs() {
-  let logList = document.getElementById("logList");
-
-  if (!logList) return;
-
-  logList.innerHTML = logs.map(l => `
-    <p>${l.text} <br><small>${l.time}</small></p>
-  `).join("");
-}
-
-function openModal() {
-  document.getElementById("modal").style.display = "flex";
-
-  if (editIndex === null) {
-    document.getElementById("modalTitle").innerText = "Add User";
-    document.getElementById("username").value = "";
-    document.getElementById("password").value = "";
-    document.getElementById("role").value = "admin";
-  }
-
-  document.getElementById("password").type = "password";
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function togglePassword() {
-  let input = document.getElementById("password");
-  input.type = input.type === "password" ? "text" : "password";
-}
-
-function showToast(msg) {
-  let toast = document.getElementById("toast");
-
-  toast.innerText = msg;
-  toast.style.display = "block";
-
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 2000);
-}
-
-function logout() {
-  window.location.href = "index.html";
-}
-
-window.onload = () => {
-  initAdmin();
-  renderUsers();
-};
+  await refreshAll();
+});

@@ -1,194 +1,494 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+const SUPABASE_URL =
+  "https://dpdchbusvfktlqjaxdlb.supabase.co";
 
-if (!currentUser) {
-  window.location.href = "index.html";
+const SUPABASE_KEY =
+  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+let currentUser = null;
+
+let categories = [];
+
+let products = [];
+
+let editingCategoryId = null;
+
+// Auth
+
+async function checkAuth(){
+  const ok =
+    await window
+      .initProtectedPageAuth();
+
+  if(!ok) return false;
+
+  currentUser =
+    window.appAuth.user;
+
+  return true;
 }
 
-// Hide admin if not admin
-if (currentUser.role !== "admin") {
-  let adminLink = document.querySelector('a[href="admin.html"]');
-  if (adminLink) adminLink.style.display = "none";
+// Toast
+
+function showToast(message){
+
+  const toast =
+    document.getElementById("toast");
+
+  if(!toast) return;
+
+  toast.innerText = message;
+
+  toast.style.display = "block";
+
+  setTimeout(() => {
+
+    toast.style.display = "none";
+
+  }, 2300);
 }
 
-let categories = JSON.parse(localStorage.getItem("categories")) || [];
-let products = JSON.parse(localStorage.getItem("products")) || [];
+// Fetch categories
 
-let editIndex = null;
+async function fetchCategories(){
 
-/* ================= SAVE ================= */
-function saveCategories() {
-  localStorage.setItem("categories", JSON.stringify(categories));
+  const { data, error } =
+    await supabaseClient
+
+      .from("categories")
+
+      .select("*")
+
+      .order("created_at", {
+
+        ascending: false
+      });
+
+  if(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to load categories"
+    );
+
+    return;
+  }
+
+  categories = data || [];
 }
 
-/* ================= NOTIFICATION ================= */
-function pushNotification(icon, title, desc) {
-  let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+// Fetch products
 
-  notifications.unshift({
-    icon,
-    title,
-    desc,
-    time: new Date().toISOString()
-  });
+async function fetchProducts(){
 
-  localStorage.setItem("notifications", JSON.stringify(notifications));
+  const { data, error } =
+    await supabaseClient
+
+      .from("products")
+
+      .select("*");
+
+  if(error){
+
+    console.error(error);
+
+    products = [];
+
+    return;
+  }
+
+  products = data || [];
 }
 
-/* ================= RENDER ================= */
-function renderTable() {
-  let body = document.getElementById("tableBody");
-  let empty = document.getElementById("emptyState");
-  let search = document.getElementById("searchCat")?.value.toLowerCase() || "";
+// Render table
+
+function renderTable(){
+
+  const body =
+    document.getElementById(
+      "tableBody"
+    );
+
+  const empty =
+    document.getElementById(
+      "emptyState"
+    );
+
+  const search =
+    document.getElementById(
+      "searchCat"
+    )?.value.toLowerCase() || "";
+
+  if(!body || !empty)
+    return;
 
   body.innerHTML = "";
 
-  categories = JSON.parse(localStorage.getItem("categories")) || [];
-  products = JSON.parse(localStorage.getItem("products")) || [];
+  const filtered =
+    categories.filter(category =>
 
-  let filtered = categories.filter(cat =>
-    cat.toLowerCase().includes(search)
-  );
+      category.name
+        ?.toLowerCase()
+        .includes(search)
+    );
 
-  if (filtered.length === 0) {
-    empty.style.display = "block";
+  if(filtered.length === 0){
+
+    empty.style.display =
+      "block";
+
     return;
-  } else {
-    empty.style.display = "none";
   }
 
-  filtered.forEach((cat, i) => {
-    let count = products.filter(p => p.category === cat).length;
+  empty.style.display =
+    "none";
+
+  filtered.forEach(category => {
+
+    const count =
+      products.filter(product =>
+
+        String(product.category_id) ===
+        String(category.id)
+
+      ).length;
 
     body.innerHTML += `
+
       <tr>
-        <td onclick="viewCategory('${cat}')">
-          ${cat}
+
+        <td onclick="viewCategory('${category.id}')">
+
+          ${category.name}
+
         </td>
 
-        <td>${count}</td>
+        <td>
+
+          ${count}
+
+        </td>
 
         <td class="actions">
 
-          <button class="btn edit" onclick="edit(${i})">
-            ✏️ Edit
+          <button
+            class="btn edit"
+            onclick="edit('${category.id}')"
+          >
+
+            Edit
+
           </button>
 
-          <button class="btn delete" onclick="del(${i})">
-            🗑 Delete
+          <button
+            class="btn delete"
+            onclick="del('${category.id}')"
+          >
+
+            Delete
+
           </button>
 
         </td>
+
       </tr>
     `;
   });
-
-  saveCategories();
 }
 
-/* ================= VIEW CATEGORY ================= */
-function viewCategory(cat) {
-  // ✅ save selected category for products page
-  localStorage.setItem("selectedCategory", cat);
+// Open modal
 
-  pushNotification("📂", "Viewing category", cat);
+function openAdd(){
 
-  // ✅ redirect
-  window.location.href = "products.html";
+  editingCategoryId = null;
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Add Category";
+
+  document.getElementById(
+    "name"
+  ).value = "";
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
 }
 
-/* ================= ADD / EDIT ================= */
-function openAdd() {
-  editIndex = null;
-  document.getElementById("name").value = "";
-  document.getElementById("modal").style.display = "flex";
+// Close modal
+
+function closeModal(){
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "none";
 }
 
-function saveCategory() {
-  let name = document.getElementById("name").value.trim();
+// View category
 
-  if (!name) return showToast("Enter category");
+function viewCategory(categoryId){
 
-  if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
-    return showToast("Category already exists");
+  localStorage.setItem(
+
+    "selectedCategoryId",
+
+    String(categoryId)
+  );
+
+  window.location.href =
+    "products.html";
+}
+
+// Edit category
+
+function edit(id){
+
+  const category =
+    categories.find(category =>
+
+      String(category.id) ===
+      String(id)
+    );
+
+  if(!category) return;
+
+  editingCategoryId =
+    category.id;
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
+    "Edit Category";
+
+  document.getElementById(
+    "name"
+  ).value =
+    category.name;
+
+  document.getElementById(
+    "modal"
+  ).style.display =
+    "flex";
+}
+
+// Create category
+
+async function createCategory(name){
+
+  const { error } =
+    await supabaseClient
+
+      .from("categories")
+
+      .insert([{
+
+        name
+      }]);
+
+  if(error){
+
+    console.error(error);
+
+    throw error;
+  }
+}
+
+// Update category
+
+async function updateCategory(id, name){
+
+  const { error } =
+    await supabaseClient
+
+      .from("categories")
+
+      .update({
+
+        name
+      })
+
+      .eq("id", id);
+
+  if(error){
+
+    console.error(error);
+
+    throw error;
+  }
+}
+
+// Save category
+
+async function saveCategory(){
+
+  const name =
+    document.getElementById(
+      "name"
+    ).value.trim();
+
+  if(!name){
+
+    return showToast(
+      "Enter category"
+    );
   }
 
-  if (editIndex !== null) {
-    let old = categories[editIndex];
+  const exists =
+    categories.some(category =>
 
-    // ✅ update products using this category
-    products.forEach(p => {
-      if (p.category === old) {
-        p.category = name;
-      }
-    });
+      category.name
+        ?.toLowerCase() ===
+      name.toLowerCase()
 
-    localStorage.setItem("products", JSON.stringify(products));
+      &&
 
-    categories[editIndex] = name;
+      String(category.id) !==
+      String(editingCategoryId)
+    );
 
-    pushNotification("✏️", "Category updated", `${old} → ${name}`);
+  if(exists){
 
-  } else {
-    categories.push(name);
-
-    pushNotification("📁", "Category added", name);
+    return showToast(
+      "Category already exists"
+    );
   }
 
-  saveCategories();
-  closeModal();
+  try{
+
+    if(editingCategoryId){
+
+      await updateCategory(
+
+        editingCategoryId,
+        name
+      );
+
+      showToast(
+        "Category updated"
+      );
+
+    }else{
+
+      await createCategory(name);
+
+      showToast(
+        "Category added"
+      );
+    }
+
+    closeModal();
+
+    await refreshData();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      error?.message ||
+
+      "Unable to save category"
+    );
+  }
+}
+
+// Delete category
+
+async function del(id){
+
+  const usedCount =
+    products.filter(product =>
+
+      String(product.category_id) ===
+      String(id)
+
+    ).length;
+
+  if(usedCount > 0){
+
+    return showToast(
+
+      `Cannot delete. Used by ${usedCount} products`
+    );
+  }
+
+  if(!confirm(
+    "Delete this category?"
+  )) return;
+
+  try{
+
+    const { error } =
+      await supabaseClient
+
+        .from("categories")
+
+        .delete()
+
+        .eq("id", id);
+
+    if(error){
+
+      throw error;
+    }
+
+    showToast(
+      "Category deleted"
+    );
+
+    await refreshData();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Unable to delete category"
+    );
+  }
+}
+
+// Logout
+
+async function logout(){
+
+  await supabaseClient.auth.signOut();
+
+  window.location.href =
+    "index.html";
+}
+
+// Refresh
+
+async function refreshData(){
+
+  await fetchCategories();
+
+  await fetchProducts();
+
   renderTable();
 }
 
-/* ================= EDIT ================= */
-function edit(i) {
-  editIndex = i;
-  document.getElementById("name").value = categories[i];
-  document.getElementById("modal").style.display = "flex";
-}
+// Init
 
-/* ================= DELETE ================= */
-function del(i) {
-  let name = categories[i];
+window.addEventListener(
+  "load",
+  async () => {
 
-  let usedProducts = products.filter(p => p.category === name);
+    const ok =
+      await checkAuth();
 
-  if (usedProducts.length > 0) {
-    return showToast(`Cannot delete. Used by ${usedProducts.length} products`);
+    if(!ok) return;
+
+    await refreshData();
   }
-
-  if (!confirm(`Delete "${name}" category?`)) return;
-
-  categories.splice(i, 1);
-
-  pushNotification("🗑️", "Category deleted", name);
-
-  saveCategories();
-  renderTable();
-}
-
-/* ================= UI ================= */
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function showToast(msg) {
-  let t = document.getElementById("toast");
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 2000);
-}
-
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
-}
-
-/* ================= SYNC ================= */
-window.addEventListener("storage", () => {
-  location.reload();
-});
-
-/* ================= INIT ================= */
-window.addEventListener("load", () => {
-  renderTable();
-});
+);
