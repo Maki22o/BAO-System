@@ -1,14 +1,5 @@
-const SUPABASE_URL =
-  "https://dpdchbusvfktlqjaxdlb.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
-
 const supabaseClient =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+  window.appSupabase;
 
 let currentUser = null;
 
@@ -20,15 +11,19 @@ let selectedProductId = null;
 
 let editingProductId = null;
 
-// UUID
+let uploadedFile = null;
 
-function isUuid(value){
+let uploadedImageUrl = "";
 
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    .test(String(value || ""));
-}
+let savingProduct = false;
 
-// Toast
+let sellingProduct = false;
+
+let isUploading = false;
+
+/* =========================================
+   TOAST
+========================================= */
 
 function showToast(message){
 
@@ -55,9 +50,34 @@ function showToast(message){
   }, 2600);
 }
 
-// Auth
+/* =========================================
+   UUID
+========================================= */
+
+function isUuid(value){
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(String(value || ""));
+}
+
+/* =========================================
+   AUTH
+========================================= */
 
 async function checkAuth(){
+
+  if(
+    typeof window
+      .initProtectedPageAuth !==
+    "function"
+  ){
+
+    console.error(
+      "Auth helper missing"
+    );
+
+    return false;
+  }
 
   const ok =
     await window
@@ -71,7 +91,207 @@ async function checkAuth(){
   return true;
 }
 
-// Fetch categories
+/* =========================================
+   UPLOAD IMAGE
+========================================= */
+
+async function uploadImage(file){
+
+  if(!file) return null;
+
+  const validTypes = [
+
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif"
+  ];
+
+  if(
+    !validTypes.includes(file.type)
+  ){
+
+    showToast(
+      "Invalid image format"
+    );
+
+    return null;
+  }
+
+  if(file.size > 5 * 1024 * 1024){
+
+    showToast(
+      "Image exceeds 5MB"
+    );
+
+    return null;
+  }
+
+  const saveButton =
+    document.getElementById(
+      "saveProductBtn"
+    );
+
+  isUploading = true;
+
+  if(saveButton){
+
+    saveButton.disabled = true;
+
+    saveButton.innerText =
+      "Uploading...";
+  }
+
+  try{
+
+    const fileName =
+      `${Date.now()}-${file.name}`;
+
+    const { error } =
+      await supabaseClient.storage
+
+        .from("product-images")
+
+        .upload(
+          fileName,
+          file,
+          {
+            upsert: true,
+            contentType: file.type
+          }
+        );
+
+    if(error){
+
+      console.error(
+        "Upload error:",
+        error
+      );
+
+      throw error;
+    }
+
+    const { data } =
+      supabaseClient.storage
+
+        .from("product-images")
+
+        .getPublicUrl(fileName);
+
+    if(
+      !data ||
+      !data.publicUrl
+    ){
+
+      throw new Error(
+        "Unable to generate image URL"
+      );
+    }
+
+    return data.publicUrl;
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Image upload failed"
+    );
+
+    return null;
+
+  }finally{
+
+    isUploading = false;
+
+    if(saveButton){
+
+      saveButton.disabled = false;
+
+      saveButton.innerText =
+        "Save Product";
+    }
+  }
+}
+
+/* =========================================
+   PREVIEW IMAGE
+========================================= */
+
+function previewImage(event){
+
+  const file =
+    event.target.files[0];
+
+  if(!file) return;
+
+  uploadedFile = file;
+
+  uploadedImageUrl = "";
+
+  const img =
+    document.getElementById(
+      "previewImg"
+    );
+
+  const placeholder =
+    document.getElementById(
+      "previewPlaceholder"
+    );
+
+  const status =
+    document.getElementById(
+      "uploadStatus"
+    );
+
+  const statusText =
+    document.getElementById(
+      "uploadStatusText"
+    );
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(e){
+
+      img.src =
+        e.target.result;
+
+      img.style.display =
+        "block";
+
+      placeholder.style.display =
+        "none";
+
+      if(status){
+
+        status.style.display =
+          "flex";
+
+        status.className =
+          "upload-status";
+
+        statusText.innerText =
+          "Image ready for upload";
+      }
+    };
+
+  reader.onerror =
+    function(){
+
+      showToast(
+        "Unable to preview image"
+      );
+    };
+
+  reader.readAsDataURL(file);
+}
+
+/* =========================================
+   FETCH CATEGORIES
+========================================= */
 
 async function fetchCategories(){
 
@@ -101,9 +321,33 @@ async function fetchCategories(){
   loadCategoriesDropdown();
 }
 
-// Fetch products
+/* =========================================
+   FETCH PRODUCTS
+========================================= */
 
 async function fetchProducts(){
+
+  const body =
+    document.getElementById(
+      "tableBody"
+    );
+
+  if(body){
+
+    body.innerHTML = `
+
+      <tr>
+
+        <td colspan="7"
+            class="table-empty">
+
+          Loading products...
+
+        </td>
+
+      </tr>
+    `;
+  }
 
   const { data, error } =
     await supabaseClient
@@ -139,7 +383,9 @@ async function fetchProducts(){
   renderTable();
 }
 
-// Categories dropdown
+/* =========================================
+   DROPDOWNS
+========================================= */
 
 function loadCategoriesDropdown(){
 
@@ -195,7 +441,9 @@ function loadCategoriesDropdown(){
   }
 }
 
-// Render table
+/* =========================================
+   RENDER PRODUCTS
+========================================= */
 
 function renderTable(){
 
@@ -209,7 +457,8 @@ function renderTable(){
   const search =
     document.getElementById(
       "search"
-    )?.value.toLowerCase() || "";
+    )?.value
+      .toLowerCase() || "";
 
   const filter =
     document.getElementById(
@@ -220,13 +469,11 @@ function renderTable(){
     products.filter(product => {
 
       const matchSearch =
-
         product.name
           ?.toLowerCase()
           .includes(search);
 
       const matchFilter =
-
         filter === "All" ||
 
         String(product.category_id) ===
@@ -257,7 +504,7 @@ function renderTable(){
     return;
   }
 
-  body.innerHTML =
+  const html =
     filtered.map(product => {
 
       const quantity =
@@ -267,15 +514,10 @@ function renderTable(){
         Number(product.price);
 
       const status =
-
         quantity === 0
-
         ? ["Out of Stock", "red"]
-
         : quantity <= 5
-
         ? ["Low Stock", "yellow"]
-
         : ["In Stock", "green"];
 
       return `
@@ -284,13 +526,34 @@ function renderTable(){
 
           <td>
 
-            ${product.id}
+            ${
+              product.image_url
+              ? `
+                <img
+                  src="${product.image_url}"
+                  class="product-image"
+                  loading="lazy"
+                  alt="${product.name}"
+                >
+              `
+              : `
+                <div class="product-image-placeholder">
+
+                  <i data-lucide="image"></i>
+
+                </div>
+              `
+            }
 
           </td>
 
           <td>
 
-            ${product.name}
+            <strong>
+
+              ${product.name}
+
+            </strong>
 
           </td>
 
@@ -298,7 +561,6 @@ function renderTable(){
 
             ${
               product.categories?.name ||
-
               "Uncategorized"
             }
 
@@ -364,20 +626,26 @@ function renderTable(){
         </tr>
       `;
     }).join("");
+
+  body.innerHTML = html;
+
+  lucide.createIcons();
 }
 
-// Open add
+/* =========================================
+   OPEN ADD
+========================================= */
 
 function openAdd(){
 
   editingProductId = null;
 
+  resetForm();
+
   document.getElementById(
     "modalTitle"
   ).innerText =
     "Add Product";
-
-  resetForm();
 
   document.getElementById(
     "modal"
@@ -385,7 +653,9 @@ function openAdd(){
     "flex";
 }
 
-// Reset form
+/* =========================================
+   RESET FORM
+========================================= */
 
 function resetForm(){
 
@@ -400,9 +670,48 @@ function resetForm(){
   document.getElementById(
     "price"
   ).value = "";
+
+  document.getElementById(
+    "productImage"
+  ).value = "";
+
+  uploadedFile = null;
+
+  uploadedImageUrl = "";
+
+  const img =
+    document.getElementById(
+      "previewImg"
+    );
+
+  const placeholder =
+    document.getElementById(
+      "previewPlaceholder"
+    );
+
+  const status =
+    document.getElementById(
+      "uploadStatus"
+    );
+
+  img.src = "";
+
+  img.style.display =
+    "none";
+
+  placeholder.style.display =
+    "flex";
+
+  if(status){
+
+    status.style.display =
+      "none";
+    }
 }
 
-// Close modal
+/* =========================================
+   CLOSE MODAL
+========================================= */
 
 function closeModal(){
 
@@ -412,7 +721,9 @@ function closeModal(){
     "none";
 }
 
-// Open edit
+/* =========================================
+   OPEN EDIT
+========================================= */
 
 function openEdit(id){
 
@@ -423,10 +734,20 @@ function openEdit(id){
       String(id)
     );
 
-  if(!product) return;
+  if(!product){
+
+    showToast(
+      "Product not found"
+    );
+
+    return;
+  }
 
   editingProductId =
     product.id;
+
+  uploadedImageUrl =
+    product.image_url || "";
 
   document.getElementById(
     "modalTitle"
@@ -453,78 +774,145 @@ function openEdit(id){
   ).value =
     product.price;
 
+  const img =
+    document.getElementById(
+      "previewImg"
+    );
+
+  const placeholder =
+    document.getElementById(
+      "previewPlaceholder"
+    );
+
+  if(product.image_url){
+
+    img.src =
+      product.image_url;
+
+    img.style.display =
+      "block";
+
+    placeholder.style.display =
+      "none";
+  }
+
   document.getElementById(
     "modal"
   ).style.display =
     "flex";
 }
 
-// Save product
+/* =========================================
+   SAVE PRODUCT
+========================================= */
 
 async function saveProduct(){
 
-  const name =
-    document.getElementById(
-      "name"
-    ).value.trim();
-
-  const categoryId =
-    document.getElementById(
-      "category"
-    ).value;
-
-  const quantity =
-    Number.parseInt(
-
-      document.getElementById(
-        "qty"
-      ).value,
-
-      10
-    );
-
-  const price =
-    Number.parseFloat(
-
-      document.getElementById(
-        "price"
-      ).value
-    );
-
   if(
-    !name ||
-    Number.isNaN(quantity) ||
-    Number.isNaN(price)
+    savingProduct ||
+    isUploading
   ){
 
-    return showToast(
-      "Fill all fields"
-    );
+    return;
   }
 
-  if(!isUuid(categoryId)){
+  savingProduct = true;
 
-    return showToast(
-      "Invalid category"
+  const saveBtn =
+    document.getElementById(
+      "saveProductBtn"
     );
+
+  if(saveBtn){
+
+    saveBtn.disabled = true;
+
+    saveBtn.innerText =
+      "Saving...";
   }
-
-  const payload = {
-
-    name,
-
-    category_id:
-      categoryId,
-
-    quantity,
-
-    price,
-
-    created_by:
-      currentUser.id
-  };
 
   try{
+
+    const name =
+      document.getElementById(
+        "name"
+      ).value.trim();
+
+    const categoryId =
+      document.getElementById(
+        "category"
+      ).value;
+
+    const quantity =
+      Number.parseInt(
+        document.getElementById(
+          "qty"
+        ).value,
+        10
+      );
+
+    const price =
+      Number.parseFloat(
+        document.getElementById(
+          "price"
+        ).value
+      );
+
+    if(
+      !name ||
+      Number.isNaN(quantity) ||
+      Number.isNaN(price)
+    ){
+
+      throw new Error(
+        "Please complete all fields"
+      );
+    }
+
+    if(!isUuid(categoryId)){
+
+      throw new Error(
+        "Invalid category selected"
+      );
+    }
+
+    let imageUrl =
+      uploadedImageUrl;
+
+    // Upload during save
+
+    if(uploadedFile){
+
+      imageUrl =
+        await uploadImage(
+          uploadedFile
+        );
+
+      if(!imageUrl){
+
+        throw new Error(
+          "Image upload failed"
+        );
+      }
+    }
+
+    const payload = {
+
+      name,
+
+      category_id:
+        categoryId,
+
+      quantity,
+
+      price,
+
+      image_url:
+        imageUrl || null,
+
+      created_by:
+        currentUser.id
+    };
 
     if(editingProductId){
 
@@ -542,6 +930,20 @@ async function saveProduct(){
 
       if(error) throw error;
 
+      await supabaseClient
+
+        .from("logs")
+
+        .insert([{
+
+          created_by:
+            currentUser.id,
+
+          text:
+            `Updated product: ${name}`
+
+        }]);
+
       showToast(
         "Product updated"
       );
@@ -557,12 +959,28 @@ async function saveProduct(){
 
       if(error) throw error;
 
+      await supabaseClient
+
+        .from("logs")
+
+        .insert([{
+
+          created_by:
+            currentUser.id,
+
+          text:
+            `Added product: ${name}`
+
+        }]);
+
       showToast(
         "Product added"
       );
     }
 
     closeModal();
+
+    resetForm();
 
     await fetchProducts();
 
@@ -571,34 +989,46 @@ async function saveProduct(){
     console.error(error);
 
     showToast(
-
-      error?.message ||
-
-      "Unable to save product"
+      error.message ||
+      "Failed to save product"
     );
+
+  }finally{
+
+    savingProduct = false;
+
+    if(saveBtn){
+
+      saveBtn.disabled = false;
+
+      saveBtn.innerText =
+        "Save Product";
+    }
   }
 }
 
-// Delete
+/* =========================================
+   DELETE PRODUCT
+========================================= */
 
 async function del(id){
 
-  if(!confirm(
-    "Delete this product?"
-  )) return;
+  const confirmed =
+    confirm(
+      "Delete this product?"
+    );
+
+  if(!confirmed) return;
 
   try{
 
-    const { error } =
-      await supabaseClient
+    await supabaseClient
 
-        .from("products")
+      .from("products")
 
-        .delete()
+      .delete()
 
-        .eq("id", id);
-
-    if(error) throw error;
+      .eq("id", id);
 
     showToast(
       "Product deleted"
@@ -611,12 +1041,14 @@ async function del(id){
     console.error(error);
 
     showToast(
-      "Unable to delete product"
+      "Delete failed"
     );
   }
 }
 
-// Sell
+/* =========================================
+   SELL PRODUCT
+========================================= */
 
 function sellProduct(id){
 
@@ -628,7 +1060,9 @@ function sellProduct(id){
     "flex";
 }
 
-// Close sell
+/* =========================================
+   CLOSE SELL
+========================================= */
 
 function closeSell(){
 
@@ -646,83 +1080,84 @@ function closeSell(){
   ).value = "";
 }
 
-// Confirm sell
+/* =========================================
+   CONFIRM SELL
+========================================= */
 
 async function confirmSell(){
 
-  const buyer =
-    document.getElementById(
-      "buyer"
-    ).value.trim();
+  if(sellingProduct){
 
-  const quantity =
-    Number.parseInt(
-
-      document.getElementById(
-        "sellQty"
-      ).value,
-
-      10
-    );
-
-  if(
-    !buyer ||
-    Number.isNaN(quantity)
-  ){
-
-    return showToast(
-      "Fill all fields"
-    );
+    return;
   }
 
-  const product =
-    products.find(product =>
-
-      String(product.id) ===
-      String(selectedProductId)
-    );
-
-  if(!product){
-
-    return showToast(
-      "Product not found"
-    );
-  }
-
-  if(quantity > product.quantity){
-
-    return showToast(
-      "Not enough stock"
-    );
-  }
+  sellingProduct = true;
 
   try{
+
+    const buyer =
+      document.getElementById(
+        "buyer"
+      ).value.trim();
+
+    const quantity =
+      Number.parseInt(
+        document.getElementById(
+          "sellQty"
+        ).value,
+        10
+      );
+
+    if(
+      !buyer ||
+      Number.isNaN(quantity)
+    ){
+
+      throw new Error(
+        "Please complete all fields"
+      );
+    }
+
+    const product =
+      products.find(product =>
+
+        String(product.id) ===
+        String(selectedProductId)
+      );
+
+    if(!product){
+
+      throw new Error(
+        "Product not found"
+      );
+    }
+
+    if(quantity > product.quantity){
+
+      throw new Error(
+        "Not enough stock"
+      );
+    }
 
     const remaining =
       product.quantity -
       quantity;
 
-    // Update stock
+    await supabaseClient
 
-    const { error:updateError } =
-      await supabaseClient
+      .from("products")
 
-        .from("products")
+      .update({
 
-        .update({
+        quantity:
+          remaining
 
-          quantity: remaining
-        })
+      })
 
-        .eq(
-          "id",
-          product.id
-        );
-
-    if(updateError)
-      throw updateError;
-
-    // Transaction
+      .eq(
+        "id",
+        product.id
+      );
 
     await supabaseClient
 
@@ -745,8 +1180,6 @@ async function confirmSell(){
           currentUser.id
       }]);
 
-    // Notification
-
     await supabaseClient
 
       .from("notifications")
@@ -763,6 +1196,83 @@ async function confirmSell(){
           currentUser.id
       }]);
 
+    await supabaseClient
+
+      .from("logs")
+
+      .insert([{
+
+        created_by:
+          currentUser.id,
+
+        text:
+          `Sold ${quantity}x ${product.name}`
+      }]);
+
+    // Receipt
+
+    document.getElementById(
+      "receiptContent"
+    ).innerHTML = `
+
+      <div class="receipt-row">
+
+        <span>Product:</span>
+
+        <strong>${product.name}</strong>
+
+      </div>
+
+      <div class="receipt-row">
+
+        <span>Buyer:</span>
+
+        <strong>${buyer}</strong>
+
+      </div>
+
+      <div class="receipt-row">
+
+        <span>Quantity:</span>
+
+        <strong>${quantity}</strong>
+
+      </div>
+
+      <div class="receipt-row">
+
+        <span>Total:</span>
+
+        <strong>
+
+          ₱${(
+            quantity *
+            product.price
+          ).toLocaleString()}
+
+        </strong>
+
+      </div>
+
+      <div class="receipt-row">
+
+        <span>Date:</span>
+
+        <strong>
+
+          ${new Date()
+            .toLocaleString()}
+
+        </strong>
+
+      </div>
+    `;
+
+    document.getElementById(
+      "receiptModal"
+    ).style.display =
+      "flex";
+
     showToast(
       "Transaction completed"
     );
@@ -776,12 +1286,36 @@ async function confirmSell(){
     console.error(error);
 
     showToast(
-      "Unable to complete sale"
+      error.message ||
+      "Sell failed"
     );
+
+  }finally{
+
+    sellingProduct = false;
   }
 }
 
-// Logout
+/* =========================================
+   RECEIPT
+========================================= */
+
+function printReceipt(){
+
+  window.print();
+}
+
+function closeReceipt(){
+
+  document.getElementById(
+    "receiptModal"
+  ).style.display =
+    "none";
+}
+
+/* =========================================
+   LOGOUT
+========================================= */
 
 async function logout(){
 
@@ -792,21 +1326,48 @@ async function logout(){
     "index.html";
 }
 
-// Init
+/* =========================================
+   INIT
+========================================= */
+
+async function init(){
+
+  const authenticated =
+    await checkAuth();
+
+  if(!authenticated) return;
+
+  await fetchCategories();
+
+  await fetchProducts();
+
+  // Backup RBAC
+
+  const backupLink =
+    document.getElementById(
+      "backupLink"
+    );
+
+  if(backupLink){
+
+    backupLink.style.display =
+
+      window.appAuth.role ===
+      "admin_user"
+
+      ? ""
+
+      : "none";
+  }
+
+  lucide.createIcons();
+
+  console.log(
+    "Products page initialized successfully"
+  );
+}
 
 window.addEventListener(
-  "load",
-  async () => {
-
-    const ok =
-      await checkAuth();
-
-    if(!ok) return;
-
-    await fetchCategories();
-
-    await fetchProducts();
-
-    lucide.createIcons();
-  }
+  "DOMContentLoaded",
+  init
 );

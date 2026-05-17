@@ -1,147 +1,574 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Categories | BAO Storage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="categories.css">
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Categories | BAO Storage</title>
+
+  <!-- Fonts -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+
+  <link
+    rel="stylesheet"
+    href="categories.css"
+  />
+
 </head>
+
 <body>
 
-<div class="layout">
+  <div class="layout">
 
-  <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar">
-    <header class="sidebar-header">
-      <div class="sidebar-brand">
-        <img src="LSPULOGO3-removebg-preview.png" alt="LSPU Logo" class="sidebar-logo">
-        <div>
-          <h2>BAO Storage</h2>
-          <p class="sub">Inventory Management</p>
-        </div>
+    <!-- ===================================== -->
+    <!-- Sidebar -->
+    <!-- ===================================== -->
+
+    <aside class="sidebar">
+
+      <div class="sidebar-inner">
+
+        <!-- Brand -->
+
+        <header class="sidebar-header">
+
+          <div class="sidebar-brand">
+
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
+
+            <div class="brand-copy">
+
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        <!-- Navigation -->
+
+        <nav class="sidebar-nav">
+
+          <a href="dashboard.html">
+
+            <i data-lucide="layout-dashboard"></i>
+
+            <span>Dashboard</span>
+
+          </a>
+
+          <a href="products.html">
+
+            <i data-lucide="package"></i>
+
+            <span>Products</span>
+
+          </a>
+
+          <a
+            href="categories.html"
+            class="active"
+          >
+
+            <i data-lucide="folder"></i>
+
+            <span>Categories</span>
+
+          </a>
+
+          <a href="transactions.html">
+
+            <i data-lucide="receipt"></i>
+
+            <span>Transactions</span>
+
+          </a>
+
+          <a href="admin.html">
+
+            <i data-lucide="shield"></i>
+
+            <span>User Management</span>
+
+          </a>
+
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
+
+            <i data-lucide="database-backup"></i>
+
+            <span>Backup & Restore</span>
+
+          </a>
+
+          <a href="reports.html">
+
+            <i data-lucide="file-bar-chart"></i>
+
+            <span>Reports</span>
+
+          </a>
+
+        </nav>
+
+        <!-- Footer -->
+
+        <footer class="sidebar-footer">
+
+          <button
+            class="logout"
+            onclick="logout()"
+          >
+
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
       </div>
-    </header>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a href="products.html"><i data-lucide="package"></i><span>Products</span></a>
-      <a href="categories.html" class="active"><i data-lucide="folder"></i><span>Categories</span></a>
-      <a href="transactions.html"><i data-lucide="receipt"></i><span>Transactions</span></a>
-      <a href="admin.html"><i data-lucide="shield"></i><span>User Management</span></a>
-      <a href="reports.html"><i data-lucide="file-bar-chart"></i><span>Reports</span></a>
-    </nav>
+    </aside>
 
-    <div class="sidebar-footer">
-      <button class="logout" onclick="logout()"><i data-lucide="log-out"></i><span>Logout</span></button>
-    </div>
-  </aside>
+    <!-- ===================================== -->
+    <!-- Main -->
+    <!-- ===================================== -->
 
-  <!-- ===== MAIN ===== -->
-  <main class="main">
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">
-      <span id="themeIcon"><i data-lucide="moon"></i></span>
-    </button>
+    <main class="main">
 
-    <header class="topbar">
-      <div>
-        <h1>Categories</h1>
-        <p>Manage your product categories</p>
-      </div>
+      <!-- Theme Toggle -->
 
-      <button class="add-btn" onclick="openAdd()">+ Add Category</button>
-    </header>
-
-    <section class="controls">
-      <input 
-        type="text" 
-        id="searchCat" 
-        placeholder="Search category..."
-        oninput="renderTable()"
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle Theme"
       >
-    </section>
 
-    <section class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Products</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <span id="themeIcon">
 
-        <tbody id="tableBody"></tbody>
-      </table>
+          <i data-lucide="moon"></i>
 
-      <div id="emptyState" class="empty-state" style="display:none;">
-        <p>No categories found</p>
+        </span>
+
+      </button>
+
+      <!-- ===================================== -->
+      <!-- Topbar -->
+      <!-- ===================================== -->
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+
+          <div class="page-badge">
+
+            <i data-lucide="layers-3"></i>
+
+            <span>Inventory Organization</span>
+
+          </div>
+
+          <h1>Categories</h1>
+
+          <p>
+            Organize inventory categories, improve product classification,
+            and manage your storage structure efficiently.
+          </p>
+
+        </div>
+
+        <div class="topbar-actions">
+
+          <button
+            class="add-btn"
+            onclick="openAdd()"
+          >
+
+            <i data-lucide="plus"></i>
+
+            <span>Add Category</span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+      <!-- ===================================== -->
+      <!-- Main Content -->
+      <!-- ===================================== -->
+
+      <div class="main-content">
+
+        <!-- ===================================== -->
+        <!-- Controls -->
+        <!-- ===================================== -->
+
+        <section class="controls-section">
+
+          <div class="controls-left">
+
+            <div class="search-box">
+
+              <div class="search-icon">
+
+                <i data-lucide="search"></i>
+
+              </div>
+
+              <input
+                type="text"
+                id="searchCat"
+                placeholder="Search categories..."
+                oninput="renderTable()"
+              />
+
+            </div>
+
+          </div>
+
+          <div class="controls-right">
+
+            <button
+              class="control-btn"
+              onclick="renderTable()"
+            >
+
+              <i data-lucide="refresh-cw"></i>
+
+              <span>Refresh</span>
+
+            </button>
+
+          </div>
+
+        </section>
+
+        <!-- ===================================== -->
+        <!-- Table Panel -->
+        <!-- ===================================== -->
+
+        <section class="table-panel">
+
+          <!-- Header -->
+
+          <div class="table-header">
+
+            <div>
+
+              <h2>Category Directory</h2>
+
+              <p>
+                View and manage all inventory product categories.
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- Table -->
+
+          <div class="table-wrapper">
+
+            <table class="categories-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>Category</th>
+
+                  <th>Products</th>
+
+                  <th class="actions-column">
+
+                    Actions
+
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody id="tableBody"></tbody>
+
+            </table>
+
+          </div>
+
+          <!-- Empty State -->
+
+          <div
+            id="emptyState"
+            class="empty-state"
+            style="display:none;"
+          >
+
+            <div class="empty-icon">
+
+              <i data-lucide="folder-search"></i>
+
+            </div>
+
+            <h3>No Categories Found</h3>
+
+            <p>
+              No categories matched your search or no categories
+              have been created yet.
+            </p>
+
+            <button
+              class="empty-btn"
+              onclick="openAdd()"
+            >
+
+              <i data-lucide="plus"></i>
+
+              <span>Create Category</span>
+
+            </button>
+
+          </div>
+
+        </section>
+
       </div>
-    </section>
 
-  </main>
-</div>
+    </main>
 
-<!-- ===== MODAL ===== -->
-<div id="modal" class="modal">
-  <div class="modal-content">
+  </div>
 
-    <h2 id="modalTitle">Add Category</h2>
+  <!-- ===================================== -->
+  <!-- Modal -->
+  <!-- ===================================== -->
 
-    <div class="form">
+  <div
+    id="modal"
+    class="modal"
+  >
 
-      <!-- ✅ STABLE INPUT -->
-      <div class="form-group">
-        <input 
-          type="text" 
-          id="name" 
-          placeholder=" " 
-          autocomplete="off"
-          required
+    <div class="modal-overlay"></div>
+
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <div class="modal-badge">
+
+            <i data-lucide="folder-plus"></i>
+
+            <span>Category Management</span>
+
+          </div>
+
+          <h2 id="modalTitle">
+
+            Add Category
+
+          </h2>
+
+          <p>
+            Create and organize inventory categories for better product management.
+          </p>
+
+        </div>
+
+        <button
+          class="close-icon"
+          onclick="closeModal()"
         >
-        <label for="name">Category Name</label>
+
+          <i data-lucide="x"></i>
+
+        </button>
+
       </div>
 
-      <!-- ✅ BUTTONS -->
-      <div class="modal-actions">
-        <button type="button" class="btn cancel" onclick="closeModal()">Cancel</button>
-        <button type="button" class="btn primary" onclick="saveCategory()">Save</button>
+      <!-- Modal Form -->
+
+      <div class="form">
+
+        <div class="form-group">
+
+          <label for="name">
+
+            Category Name
+
+          </label>
+
+          <input
+            type="text"
+            id="name"
+            placeholder="Enter category name"
+            autocomplete="off"
+            required
+          />
+
+        </div>
+
+        <!-- Actions -->
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="btn cancel"
+            onclick="closeModal()"
+          >
+
+            Cancel
+
+          </button>
+
+          <button
+            type="button"
+            class="btn primary"
+            onclick="saveCategory()"
+          >
+
+            <i data-lucide="save"></i>
+
+            <span>Save Category</span>
+
+          </button>
+
+        </div>
+
       </div>
 
     </div>
 
   </div>
-</div>
 
-<!-- ===== TOAST ===== -->
-<div id="toast"></div>
+  <!-- ===================================== -->
+  <!-- Toast -->
+  <!-- ===================================== -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app-auth.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="categories.js"></script>
-<script>
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    const isLight = savedTheme === "light";
-    if (isLight) document.body.classList.add("light-mode");
-    const icon = document.getElementById("themeIcon");
-    const toggle = document.getElementById("themeToggle");
-    function refreshThemeIcon(light) {
-      icon.innerHTML = light ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+  <div id="toast"></div>
+
+  <!-- ===================================== -->
+  <!-- Scripts -->
+  <!-- ===================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="app-auth.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="categories.js"></script>
+
+  <!-- Theme -->
+
+  <script>
+
+    (function(){
+
+      const savedTheme =
+        localStorage.getItem("theme");
+
+      const isLight =
+        savedTheme === "light";
+
+      if(isLight){
+
+        document.body.classList.add(
+          "light-mode"
+        );
+      }
+
+      const icon =
+        document.getElementById(
+          "themeIcon"
+        );
+
+      const toggle =
+        document.getElementById(
+          "themeToggle"
+        );
+
+      function refreshThemeIcon(light){
+
+        icon.innerHTML = light
+
+          ? '<i data-lucide="sun"></i>'
+
+          : '<i data-lucide="moon"></i>';
+
+        lucide.createIcons();
+      }
+
+      toggle.addEventListener(
+        "click",
+        function(){
+
+          document.body.classList.toggle(
+            "light-mode"
+          );
+
+          const light =
+            document.body.classList.contains(
+              "light-mode"
+            );
+
+          localStorage.setItem(
+            "theme",
+            light
+              ? "light"
+              : "dark"
+          );
+
+          refreshThemeIcon(light);
+        }
+      );
+
+      refreshThemeIcon(isLight);
+
       lucide.createIcons();
-    }
-    toggle.addEventListener("click", function() {
-      document.body.classList.toggle("light-mode");
-      const light = document.body.classList.contains("light-mode");
-      localStorage.setItem("theme", light ? "light" : "dark");
-      refreshThemeIcon(light);
-    });
-    refreshThemeIcon(isLight);
-  })();
-</script>
+
+    })();
+
+  </script>
 
 </body>
 </html>

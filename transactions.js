@@ -479,6 +479,25 @@ window.addEventListener(
 
     resetAndRender();
 
+    // Backup RBAC
+
+    const backupLink =
+      document.getElementById(
+        "backupLink"
+      );
+
+    if(backupLink){
+
+      backupLink.style.display =
+
+        window.appAuth.role ===
+        "admin_user"
+
+        ? ""
+
+        : "none";
+    }
+
     lucide.createIcons();
   }
 );

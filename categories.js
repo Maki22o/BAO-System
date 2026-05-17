@@ -1,49 +1,58 @@
-const SUPABASE_URL =
-  "https://dpdchbusvfktlqjaxdlb.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
-
 const supabaseClient =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+  window.appSupabase;
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
 
 let currentUser = null;
 
 let categories = [];
-
 let products = [];
 
 let editingCategoryId = null;
 
-// Toast
+let isRefreshing = false;
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getEl(id){
+
+  return document.getElementById(id);
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
 
 function showToast(message){
 
   const toast =
-    document.getElementById(
-      "toast"
-    );
+    getEl("toast");
 
   if(!toast) return;
 
   toast.innerText =
     message;
 
-  toast.style.display =
-    "block";
+  toast.classList.add(
+    "show"
+  );
 
   setTimeout(() => {
 
-    toast.style.display =
-      "none";
+    toast.classList.remove(
+      "show"
+    );
 
-  }, 2300);
+  }, 2600);
 }
 
-// Auth
+/* =========================================================
+   AUTH
+========================================================= */
 
 async function checkAuth(){
 
@@ -59,82 +68,186 @@ async function checkAuth(){
   return true;
 }
 
-// Fetch categories
+/* =========================================================
+   FETCH CATEGORIES
+========================================================= */
 
 async function fetchCategories(){
 
-  const { data, error } =
-    await supabaseClient
+  try{
 
-      .from("categories")
+    const { data, error } =
+      await supabaseClient
 
-      .select("*")
+        .from("categories")
 
-      .order("created_at", {
+        .select("*")
 
-        ascending: false
-      });
+        .order("created_at", {
 
-  if(error){
+          ascending: false
+        });
+
+    if(error){
+
+      throw error;
+    }
+
+    categories = [...(data || [])];
+
+  }catch(error){
 
     console.error(error);
+
+    categories = [];
 
     showToast(
       "Unable to load categories"
     );
-
-    categories = [];
-
-    return;
   }
-
-  categories = data || [];
 }
 
-// Fetch products
+/* =========================================================
+   FETCH PRODUCTS
+========================================================= */
 
 async function fetchProducts(){
 
-  const { data, error } =
-    await supabaseClient
+  try{
 
-      .from("products")
+    const { data, error } =
+      await supabaseClient
 
-      .select("*");
+        .from("products")
 
-  if(error){
+        .select("*");
+
+    if(error){
+
+      throw error;
+    }
+
+    products = [...(data || [])];
+
+  }catch(error){
 
     console.error(error);
 
     products = [];
 
+    showToast(
+      "Unable to load products"
+    );
+  }
+}
+
+/* =========================================================
+   REFRESH DATA
+========================================================= */
+
+async function refreshData({
+
+  silent = false,
+  force = false
+
+} = {}){
+
+  if(isRefreshing && !force){
+
     return;
   }
 
-  products = data || [];
+  isRefreshing = true;
+
+  const refreshBtn =
+    document.querySelector(
+      ".control-btn"
+    );
+
+  try{
+
+    if(refreshBtn){
+
+      refreshBtn.disabled = true;
+
+      refreshBtn.classList.add(
+        "loading"
+      );
+    }
+
+    if(!silent){
+
+      const body =
+        getEl("tableBody");
+
+      if(body){
+
+        body.innerHTML = `
+
+          <tr>
+
+            <td colspan="3">
+
+              Loading categories...
+
+            </td>
+
+          </tr>
+        `;
+      }
+    }
+
+    await Promise.all([
+
+      fetchCategories(),
+      fetchProducts()
+
+    ]);
+
+    renderTable();
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast(
+      "Refresh failed"
+    );
+
+  }finally{
+
+    isRefreshing = false;
+
+    if(refreshBtn){
+
+      refreshBtn.disabled = false;
+
+      refreshBtn.classList.remove(
+        "loading"
+      );
+    }
+  }
 }
 
-// Render table
+/* =========================================================
+   RENDER TABLE
+========================================================= */
 
 function renderTable(){
 
   const body =
-    document.getElementById(
-      "tableBody"
-    );
+    getEl("tableBody");
 
   const empty =
-    document.getElementById(
-      "emptyState"
-    );
+    getEl("emptyState");
 
   const search =
-    document.getElementById(
-      "searchCat"
-    )?.value.toLowerCase() || "";
+    getEl("searchCat")
+      ?.value
+      ?.toLowerCase()
+      ?.trim() || "";
 
-  if(!body || !empty)
-    return;
+  if(!body || !empty) return;
 
   body.innerHTML = "";
 
@@ -157,7 +270,7 @@ function renderTable(){
   empty.style.display =
     "none";
 
-  filtered.forEach(category => {
+  const rows = filtered.map(category => {
 
     const count =
       products.filter(product =>
@@ -167,7 +280,7 @@ function renderTable(){
 
       ).length;
 
-    body.innerHTML += `
+    return `
 
       <tr>
 
@@ -208,40 +321,44 @@ function renderTable(){
       </tr>
     `;
   });
+
+  body.innerHTML =
+    rows.join("");
+
+  lucide.createIcons();
 }
 
-// Open modal
+/* =========================================================
+   OPEN MODAL
+========================================================= */
 
 function openAdd(){
 
   editingCategoryId = null;
 
-  document.getElementById(
-    "modalTitle"
-  ).innerText =
-    "Add Category";
+  getEl("modalTitle")
+    .innerText =
+      "Add Category";
 
-  document.getElementById(
-    "name"
-  ).value = "";
+  getEl("name").value = "";
 
-  document.getElementById(
-    "modal"
-  ).style.display =
+  getEl("modal").style.display =
     "flex";
 }
 
-// Close modal
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
 
 function closeModal(){
 
-  document.getElementById(
-    "modal"
-  ).style.display =
+  getEl("modal").style.display =
     "none";
 }
 
-// View category
+/* =========================================================
+   VIEW CATEGORY
+========================================================= */
 
 function viewCategory(categoryId){
 
@@ -256,7 +373,9 @@ function viewCategory(categoryId){
     "products.html";
 }
 
-// Edit
+/* =========================================================
+   EDIT
+========================================================= */
 
 function edit(id){
 
@@ -272,50 +391,59 @@ function edit(id){
   editingCategoryId =
     category.id;
 
-  document.getElementById(
-    "modalTitle"
-  ).innerText =
-    "Edit Category";
+  getEl("modalTitle")
+    .innerText =
+      "Edit Category";
 
-  document.getElementById(
-    "name"
-  ).value =
+  getEl("name").value =
     category.name;
 
-  document.getElementById(
-    "modal"
-  ).style.display =
+  getEl("modal").style.display =
     "flex";
 }
 
-// Create
+/* =========================================================
+   CREATE CATEGORY
+========================================================= */
 
 async function createCategory(name){
+
+  const payload = {
+
+    name
+  };
+
+  if(currentUser?.id){
+
+    payload.created_by =
+      currentUser.id;
+  }
 
   const { error } =
     await supabaseClient
 
       .from("categories")
 
-      .insert([{
-
-        name,
-
-        created_by:
-          currentUser.id
-      }]);
+      .insert([payload]);
 
   if(error){
 
-    console.error(error);
-
     throw error;
   }
+
+  await createLog(
+    `Created category ${name}`
+  );
 }
 
-// Update
+/* =========================================================
+   UPDATE CATEGORY
+========================================================= */
 
-async function updateCategory(id, name){
+async function updateCategory(
+  id,
+  name
+){
 
   const { error } =
     await supabaseClient
@@ -331,25 +459,29 @@ async function updateCategory(id, name){
 
   if(error){
 
-    console.error(error);
-
     throw error;
   }
+
+  await createLog(
+    `Updated category ${name}`
+  );
 }
 
-// Save
+/* =========================================================
+   SAVE CATEGORY
+========================================================= */
 
 async function saveCategory(){
 
   const name =
-    document.getElementById(
-      "name"
-    ).value.trim();
+    getEl("name")
+      .value
+      .trim();
 
   if(!name){
 
     return showToast(
-      "Enter category"
+      "Enter category name"
     );
   }
 
@@ -373,7 +505,20 @@ async function saveCategory(){
     );
   }
 
+  const saveBtn =
+    document.querySelector(
+      ".btn.primary"
+    );
+
   try{
+
+    if(saveBtn){
+
+      saveBtn.disabled = true;
+
+      saveBtn.innerText =
+        "Saving...";
+    }
 
     if(editingCategoryId){
 
@@ -398,7 +543,10 @@ async function saveCategory(){
 
     closeModal();
 
-    await refreshData();
+    await refreshData({
+
+      force: true
+    });
 
   }catch(error){
 
@@ -410,10 +558,22 @@ async function saveCategory(){
 
       "Unable to save category"
     );
+
+  }finally{
+
+    if(saveBtn){
+
+      saveBtn.disabled = false;
+
+      saveBtn.innerText =
+        "Save Category";
+    }
   }
 }
 
-// Delete
+/* =========================================================
+   DELETE CATEGORY
+========================================================= */
 
 async function del(id){
 
@@ -439,6 +599,13 @@ async function del(id){
 
   try{
 
+    const category =
+      categories.find(category =>
+
+        String(category.id) ===
+        String(id)
+      );
+
     const { error } =
       await supabaseClient
 
@@ -453,11 +620,19 @@ async function del(id){
       throw error;
     }
 
+    await createLog(
+
+      `Deleted category ${category?.name || id}`
+    );
+
     showToast(
       "Category deleted"
     );
 
-    await refreshData();
+    await refreshData({
+
+      force: true
+    });
 
   }catch(error){
 
@@ -469,7 +644,38 @@ async function del(id){
   }
 }
 
-// Logout
+/* =========================================================
+   AUDIT LOG
+========================================================= */
+
+async function createLog(text){
+
+  try{
+
+    await supabaseClient
+
+      .from("logs")
+
+      .insert([{
+
+        created_by:
+          currentUser?.id || null,
+
+        text
+      }]);
+
+  }catch(error){
+
+    console.error(
+      "Log failed:",
+      error
+    );
+  }
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
 
 async function logout(){
 
@@ -480,18 +686,22 @@ async function logout(){
     "index.html";
 }
 
-// Refresh
+/* =========================================================
+   AUTO REFRESH
+========================================================= */
 
-async function refreshData(){
+setInterval(() => {
 
-  await fetchCategories();
+  refreshData({
 
-  await fetchProducts();
+    silent: true
+  });
 
-  renderTable();
-}
+}, 15000);
 
-// Init
+/* =========================================================
+   INIT
+========================================================= */
 
 window.addEventListener(
   "load",
@@ -502,8 +712,32 @@ window.addEventListener(
 
     if(!ok) return;
 
-    await refreshData();
+    await refreshData({
+
+      force: true
+    });
+
+    // RBAC
+
+    const backupLink =
+      getEl("backupLink");
+
+    if(backupLink){
+
+      backupLink.style.display =
+
+        window.appAuth.role ===
+        "admin_user"
+
+        ? ""
+
+        : "none";
+    }
 
     lucide.createIcons();
+
+    console.log(
+      "Categories initialized successfully"
+    );
   }
 );

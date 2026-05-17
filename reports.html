@@ -3,12 +3,12 @@
 
 <head>
 
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  >
+  />
 
   <title>
     Reports | BAO Storage
@@ -19,25 +19,25 @@
   <link
     rel="preconnect"
     href="https://fonts.googleapis.com"
-  >
+  />
 
   <link
     rel="preconnect"
     href="https://fonts.gstatic.com"
     crossorigin
-  >
+  />
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
-  >
+  />
 
   <!-- CSS -->
 
   <link
     rel="stylesheet"
     href="reports.css"
-  >
+  />
 
   <!-- Charts -->
 
@@ -49,116 +49,132 @@
 
   <div class="layout">
 
+    <!-- ===================================== -->
     <!-- Sidebar -->
+    <!-- ===================================== -->
 
     <aside class="sidebar">
 
-      <header class="sidebar-header">
+      <div class="sidebar-inner">
 
-        <div class="sidebar-brand">
+        <!-- Brand -->
 
-          <img
-            src="LSPULOGO3-removebg-preview.png"
-            alt="LSPU Logo"
-            class="sidebar-logo"
-          >
+        <header class="sidebar-header">
 
-          <div>
+          <div class="sidebar-brand">
 
-            <h2>
-              BAO Storage
-            </h2>
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
 
-            <p class="sub">
-              Inventory Management
-            </p>
+            <div class="brand-copy">
+
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
 
           </div>
 
-        </div>
+        </header>
 
-      </header>
+        <!-- Navigation -->
 
-      <!-- Nav -->
+        <nav class="sidebar-nav">
 
-      <nav class="sidebar-nav">
+          <a href="dashboard.html">
 
-        <a href="dashboard.html">
+            <i data-lucide="layout-dashboard"></i>
 
-          <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
 
-          <span>Dashboard</span>
+          </a>
 
-        </a>
+          <a href="products.html">
 
-        <a href="products.html">
+            <i data-lucide="package"></i>
 
-          <i data-lucide="package"></i>
+            <span>Products</span>
 
-          <span>Products</span>
+          </a>
 
-        </a>
+          <a href="categories.html">
 
-        <a href="categories.html">
+            <i data-lucide="folder"></i>
 
-          <i data-lucide="folder"></i>
+            <span>Categories</span>
 
-          <span>Categories</span>
+          </a>
 
-        </a>
+          <a href="transactions.html">
 
-        <a href="transactions.html">
+            <i data-lucide="receipt"></i>
 
-          <i data-lucide="receipt"></i>
+            <span>Transactions</span>
 
-          <span>Transactions</span>
+          </a>
 
-        </a>
+          <a href="admin.html">
 
-        <a
-          href="admin.html"
-          id="adminLink"
-        >
+            <i data-lucide="shield"></i>
 
-          <i data-lucide="shield"></i>
+            <span>User Management</span>
 
-          <span>User Management</span>
+          </a>
 
-        </a>
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
 
-        <a
-          href="reports.html"
-          class="active"
-        >
+            <i data-lucide="database-backup"></i>
 
-          <i data-lucide="file-bar-chart"></i>
+            <span>Backup & Restore</span>
 
-          <span>Reports</span>
+          </a>
 
-        </a>
+          <a
+            href="reports.html"
+            class="active"
+          >
 
-      </nav>
+            <i data-lucide="file-bar-chart"></i>
 
-      <!-- Footer -->
+            <span>Reports</span>
 
-      <footer class="sidebar-footer">
+          </a>
 
-        <button
-          class="logout"
-          onclick="logout()"
-        >
+        </nav>
 
-          <i data-lucide="log-out"></i>
+        <!-- Footer -->
 
-          <span>Logout</span>
+        <footer class="sidebar-footer">
 
-        </button>
+          <button
+            class="logout"
+            onclick="logout()"
+          >
 
-      </footer>
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
 
     </aside>
 
+    <!-- ===================================== -->
     <!-- Main -->
+    <!-- ===================================== -->
 
     <main class="main">
 
@@ -178,272 +194,436 @@
 
       </button>
 
+      <!-- ===================================== -->
       <!-- Topbar -->
+      <!-- ===================================== -->
 
-      <div class="topbar">
+      <header class="topbar">
 
-        <div>
+        <div class="topbar-left">
+
+          <div class="page-badge">
+
+            <i data-lucide="chart-column-big"></i>
+
+            <span>Analytics & Reporting</span>
+
+          </div>
 
           <h1>
             Reports
           </h1>
 
           <p>
-            Analyze your sales and performance
+            Analyze revenue trends, inventory movement,
+            transaction performance, and operational analytics.
           </p>
 
         </div>
 
-      </div>
+      </header>
 
-      <!-- Filters -->
+      <!-- ===================================== -->
+      <!-- Main Content -->
+      <!-- ===================================== -->
 
-      <div class="controls">
+      <div class="main-content">
 
-        <div class="date-group">
+        <!-- ===================================== -->
+        <!-- Controls -->
+        <!-- ===================================== -->
 
-          <input
-            type="date"
-            id="startDate"
-          >
+        <section class="controls-section">
 
-          <span>-</span>
+          <!-- Date Range -->
 
-          <input
-            type="date"
-            id="endDate"
-          >
+          <div class="controls-left">
 
-        </div>
+            <div class="date-range">
 
-        <button
-          class="apply-btn"
-          onclick="loadReports()"
-        >
+              <!-- Start -->
 
-          Apply
+              <div class="date-wrapper">
 
-        </button>
+                <label>
+                  Start Date
+                </label>
 
-      </div>
+                <input
+                  type="date"
+                  id="startDate"
+                />
 
-      <!-- KPI Cards -->
+              </div>
 
-      <div class="stats">
+              <!-- Divider -->
 
-        <div class="card">
+              <div class="date-divider">
 
-          <div class="card-icon purple">
+                <span>to</span>
 
-            <i data-lucide="trending-up"></i>
+              </div>
 
-          </div>
+              <!-- End -->
 
-          <div>
+              <div class="date-wrapper">
 
-            <p>Total Sales</p>
+                <label>
+                  End Date
+                </label>
 
-            <h3 id="totalSales">
-              ₱0
-            </h3>
+                <input
+                  type="date"
+                  id="endDate"
+                />
 
-            <span class="growth">
-              ↑ 12.5%
-            </span>
+              </div>
 
-          </div>
-
-        </div>
-
-        <div class="card">
-
-          <div class="card-icon green">
-
-            <i data-lucide="shopping-bag"></i>
+            </div>
 
           </div>
 
-          <div>
+          <!-- Actions -->
 
-            <p>Total Transactions</p>
+          <div class="controls-right">
 
-            <h3 id="totalTxns">
-              0
-            </h3>
+            <button
+              class="apply-btn"
+              onclick="loadReports()"
+            >
 
-            <span class="growth">
-              ↑ 33.3%
-            </span>
+              <i data-lucide="filter"></i>
 
-          </div>
+              <span>Apply Filters</span>
 
-        </div>
-
-        <div class="card">
-
-          <div class="card-icon blue">
-
-            <i data-lucide="badge-dollar-sign"></i>
+            </button>
 
           </div>
 
-          <div>
+        </section>
 
-            <p>Average Sale</p>
+        <!-- ===================================== -->
+        <!-- KPI Cards -->
+        <!-- ===================================== -->
 
-            <h3 id="avgSale">
-              ₱0
-            </h3>
+        <section class="stats-grid">
 
-            <span class="growth">
-              ↑ 8.2%
-            </span>
+          <!-- Sales -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon purple">
+
+              <i data-lucide="trending-up"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Sales</p>
+
+              <h3 id="totalSales">
+
+                ₱0
+
+              </h3>
+
+              <span class="stats-meta">
+
+                Revenue Overview
+
+              </span>
+
+            </div>
+
+          </article>
+
+          <!-- Transactions -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon green">
+
+              <i data-lucide="shopping-bag"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Transactions</p>
+
+              <h3 id="totalTxns">
+
+                0
+
+              </h3>
+
+              <span class="stats-meta">
+
+                Sales Activity
+
+              </span>
+
+            </div>
+
+          </article>
+
+          <!-- Average -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon blue">
+
+              <i data-lucide="badge-dollar-sign"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Average Sale</p>
+
+              <h3 id="avgSale">
+
+                ₱0
+
+              </h3>
+
+              <span class="stats-meta">
+
+                Per Transaction
+
+              </span>
+
+            </div>
+
+          </article>
+
+          <!-- Items -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon orange">
+
+              <i data-lucide="package"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Items Sold</p>
+
+              <h3 id="totalItems">
+
+                0
+
+              </h3>
+
+              <span class="stats-meta">
+
+                Inventory Movement
+
+              </span>
+
+            </div>
+
+          </article>
+
+        </section>
+
+        <!-- ===================================== -->
+        <!-- Analytics Grid -->
+        <!-- ===================================== -->
+
+        <section class="reports-grid">
+
+          <!-- Sales Trend -->
+
+          <div class="panel large-chart">
+
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  Sales Trend
+                </h3>
+
+                <p>
+                  Revenue performance over time
+                </p>
+
+              </div>
+
+              <div class="panel-actions">
+
+                <div class="trend-select-wrapper">
+
+                  <select id="trendRange">
+
+                    <option>
+
+                      Daily
+
+                    </option>
+
+                    <option>
+
+                      Weekly
+
+                    </option>
+
+                    <option>
+
+                      Monthly
+
+                    </option>
+
+                  </select>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+              <canvas id="salesChart"></canvas>
+
+            </div>
 
           </div>
 
-        </div>
+          <!-- Category Chart -->
 
-        <div class="card">
+          <div class="panel side-chart">
 
-          <div class="card-icon orange">
+            <div class="panel-header">
 
-            <i data-lucide="package"></i>
+              <div>
 
-          </div>
+                <h3>
+                  Sales by Category
+                </h3>
 
-          <div>
+                <p>
+                  Revenue distribution by category
+                </p>
 
-            <p>Total Items Sold</p>
+              </div>
 
-            <h3 id="totalItems">
-              0
-            </h3>
+            </div>
 
-            <span class="growth">
-              ↑ 100%
-            </span>
+            <div class="chart-wrapper small">
 
-          </div>
+              <canvas id="categoryChart"></canvas>
 
-        </div>
-
-      </div>
-
-      <!-- Charts Grid -->
-
-      <div class="reports-grid">
-
-        <!-- Sales Trend -->
-
-        <div class="panel large-chart">
-
-          <div class="panel-header">
-
-            <h3>
-              Sales Trend
-            </h3>
-
-            <select id="trendRange">
-
-              <option>
-                Daily
-              </option>
-
-              <option>
-                Weekly
-              </option>
-
-              <option>
-                Monthly
-              </option>
-
-            </select>
+            </div>
 
           </div>
 
-          <div class="chart-wrapper">
+        </section>
 
-            <canvas id="salesChart"></canvas>
+        <!-- ===================================== -->
+        <!-- Bottom Grid -->
+        <!-- ===================================== -->
+
+        <section class="reports-grid bottom-grid">
+
+          <!-- Product Performance -->
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  Product Performance
+                </h3>
+
+                <p>
+                  Top-performing products and revenue metrics
+                </p>
+
+              </div>
+
+            </div>
+
+            <div class="table-wrapper">
+
+              <table class="reports-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th>Product</th>
+
+                    <th>Category</th>
+
+                    <th>Sold</th>
+
+                    <th>Revenue</th>
+
+                    <th>Avg Price</th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody id="reportTable">
+
+                  <tr class="loading-row">
+
+                    <td colspan="5">
+
+                      Loading report data...
+
+                    </td>
+
+                  </tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
 
           </div>
 
-        </div>
+          <!-- Insights -->
 
-        <!-- Category Sales -->
+          <div class="panel insights-panel">
 
-        <div class="panel side-chart">
+            <div class="panel-header">
 
-          <h3>
-            Sales by Category
-          </h3>
+              <div>
 
-          <div class="chart-wrapper small">
+                <h3>
 
-            <canvas id="categoryChart"></canvas>
+                  <i data-lucide="lightbulb"></i>
 
-          </div>
+                  Insights
 
-        </div>
+                </h3>
 
-      </div>
+                <p>
+                  Automated analytics and business insights
+                </p>
 
-      <!-- Bottom Grid -->
+              </div>
 
-      <div class="reports-grid bottom-grid">
+            </div>
 
-        <!-- Product Performance -->
-
-        <div class="panel">
-
-          <h3>
-            Product Performance
-          </h3>
-
-          <div class="table-container">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>Product</th>
-
-                  <th>Category</th>
-
-                  <th>Sold</th>
-
-                  <th>Revenue</th>
-
-                  <th>Avg Price</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="reportTable"></tbody>
-
-            </table>
+            <div
+              id="insights"
+              class="insights-list"
+            ></div>
 
           </div>
 
-        </div>
-
-        <!-- Insights -->
-
-        <div class="panel insights-panel">
-
-          <h3>
-
-            <i data-lucide="lightbulb"></i>
-
-            Insights
-
-          </h3>
-
-          <div id="insights"></div>
-
-        </div>
+        </section>
 
       </div>
 
@@ -451,7 +631,9 @@
 
   </div>
 
+  <!-- ===================================== -->
   <!-- Scripts -->
+  <!-- ===================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -461,79 +643,12 @@
 
   <script src="reports.js"></script>
 
-  <!-- Theme -->
+  <!-- Init -->
 
   <script>
-
-    (function(){
-
-      const savedTheme =
-        localStorage.getItem(
-          "theme"
-        );
-
-      const isLight =
-        savedTheme === "light";
-
-      if(isLight){
-
-        document.body.classList.add(
-          "light-mode"
-        );
-      }
-
-      const icon =
-        document.getElementById(
-          "themeIcon"
-        );
-
-      const toggle =
-        document.getElementById(
-          "themeToggle"
-        );
-
-      function refreshThemeIcon(light){
-
-        icon.innerHTML = light
-
-          ? '<i data-lucide="sun"></i>'
-
-          : '<i data-lucide="moon"></i>';
-
-        lucide.createIcons();
-      }
-
-      toggle.addEventListener(
-        "click",
-        function(){
-
-          document.body.classList.toggle(
-            "light-mode"
-          );
-
-          const light =
-            document.body.classList.contains(
-              "light-mode"
-            );
-
-          localStorage.setItem(
-            "theme",
-            light
-              ? "light"
-              : "dark"
-          );
-
-          refreshThemeIcon(light);
-        }
-      );
-
-      refreshThemeIcon(isLight);
-
-      lucide.createIcons();
-
-    })();
-
+    lucide.createIcons();
   </script>
 
 </body>
+
 </html>

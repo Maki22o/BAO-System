@@ -1,143 +1,512 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transactions | BAO Storage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="transactions.css">
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Transactions | BAO Storage
+  </title>
+
+  <!-- Fonts -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+
+  <link
+    rel="stylesheet"
+    href="transactions.css"
+  />
+
 </head>
+
 <body>
 
-<div class="layout">
+  <div class="layout">
 
-  <!-- ================= SIDEBAR ================= -->
-  <aside class="sidebar">
-    <header class="sidebar-header">
-      <div class="sidebar-brand">
-        <img src="LSPULOGO3-removebg-preview.png" alt="LSPU Logo" class="sidebar-logo">
-        <div>
-          <h2>BAO Storage</h2>
-          <p class="sub">Inventory Management</p>
+    <!-- ===================================== -->
+    <!-- Sidebar -->
+    <!-- ===================================== -->
+
+    <aside class="sidebar">
+
+      <div class="sidebar-inner">
+
+        <!-- Brand -->
+
+        <header class="sidebar-header">
+
+          <div class="sidebar-brand">
+
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
+
+            <div class="brand-copy">
+
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        <!-- Navigation -->
+
+        <nav class="sidebar-nav">
+
+          <a href="dashboard.html">
+
+            <i data-lucide="layout-dashboard"></i>
+
+            <span>Dashboard</span>
+
+          </a>
+
+          <a href="products.html">
+
+            <i data-lucide="package"></i>
+
+            <span>Products</span>
+
+          </a>
+
+          <a href="categories.html">
+
+            <i data-lucide="folder"></i>
+
+            <span>Categories</span>
+
+          </a>
+
+          <a
+            href="transactions.html"
+            class="active"
+          >
+
+            <i data-lucide="receipt"></i>
+
+            <span>Transactions</span>
+
+          </a>
+
+          <a href="admin.html">
+
+            <i data-lucide="shield"></i>
+
+            <span>User Management</span>
+
+          </a>
+
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
+
+            <i data-lucide="database-backup"></i>
+
+            <span>Backup & Restore</span>
+
+          </a>
+
+          <a href="reports.html">
+
+            <i data-lucide="file-bar-chart"></i>
+
+            <span>Reports</span>
+
+          </a>
+
+        </nav>
+
+        <!-- Footer -->
+
+        <footer class="sidebar-footer">
+
+          <button
+            class="logout"
+            onclick="logout()"
+          >
+
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
+
+    </aside>
+
+    <!-- ===================================== -->
+    <!-- Main -->
+    <!-- ===================================== -->
+
+    <main class="main">
+
+      <!-- Theme -->
+
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle Theme"
+      >
+
+        <span id="themeIcon">
+
+          <i data-lucide="moon"></i>
+
+        </span>
+
+      </button>
+
+      <!-- ===================================== -->
+      <!-- Topbar -->
+      <!-- ===================================== -->
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+
+          <div class="page-badge">
+
+            <i data-lucide="receipt-text"></i>
+
+            <span>Sales & Inventory History</span>
+
+          </div>
+
+          <h1>
+            Transactions
+          </h1>
+
+          <p>
+            Track inventory sales, transaction history,
+            buyer activity, and operational records.
+          </p>
+
         </div>
+
+      </header>
+
+      <!-- ===================================== -->
+      <!-- Main Content -->
+      <!-- ===================================== -->
+
+      <div class="main-content">
+
+        <!-- ===================================== -->
+        <!-- Controls -->
+        <!-- ===================================== -->
+
+        <section class="controls-section">
+
+          <!-- Search -->
+
+          <div class="controls-left">
+
+            <div class="search-box">
+
+              <div class="search-icon">
+
+                <i data-lucide="search"></i>
+
+              </div>
+
+              <input
+                type="text"
+                id="search"
+                placeholder="Search products or buyers..."
+                oninput="resetAndRender()"
+              />
+
+            </div>
+
+          </div>
+
+          <!-- Right -->
+
+          <div class="controls-right">
+
+            <!-- Category -->
+
+            <div class="filter-wrapper">
+
+              <i
+                data-lucide="filter"
+                class="filter-icon"
+              ></i>
+
+              <select
+                id="filter"
+                onchange="resetAndRender()"
+              >
+
+                <option value="All">
+
+                  All Categories
+
+                </option>
+
+              </select>
+
+            </div>
+
+            <!-- Date From -->
+
+            <div class="date-wrapper">
+
+              <label>
+                From
+              </label>
+
+              <input
+                type="date"
+                id="dateFrom"
+                title="From date"
+                onchange="resetAndRender()"
+              />
+
+            </div>
+
+            <!-- Date To -->
+
+            <div class="date-wrapper">
+
+              <label>
+                To
+              </label>
+
+              <input
+                type="date"
+                id="dateTo"
+                title="To date"
+                onchange="resetAndRender()"
+              />
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- ===================================== -->
+        <!-- Table Panel -->
+        <!-- ===================================== -->
+
+        <section
+          class="table-panel"
+          id="tableContainer"
+        >
+
+          <!-- Header -->
+
+          <div class="table-header">
+
+            <div>
+
+              <h2>
+                Transaction History
+              </h2>
+
+              <p>
+                Review sales records, inventory movement,
+                and operational transaction history.
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- Table -->
+
+          <div class="table-wrapper">
+
+            <table class="transactions-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>ID</th>
+
+                  <th>Product</th>
+
+                  <th>Category</th>
+
+                  <th>Buyer</th>
+
+                  <th>Quantity</th>
+
+                  <th>Total</th>
+
+                  <th>Date</th>
+
+                  <th>Time</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody id="tableBody"></tbody>
+
+            </table>
+
+          </div>
+
+          <!-- Empty -->
+
+          <div
+            id="emptyState"
+            class="empty-state"
+          >
+
+            <div class="empty-icon">
+
+              <i data-lucide="receipt"></i>
+
+            </div>
+
+            <h3>
+              No Transactions Found
+            </h3>
+
+            <p>
+              No transaction records matched your search
+              or no sales activity has been recorded yet.
+            </p>
+
+          </div>
+
+        </section>
+
       </div>
-    </header>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a href="products.html"><i data-lucide="package"></i><span>Products</span></a>
-      <a href="categories.html"><i data-lucide="folder"></i><span>Categories</span></a>
-      <a href="transactions.html" class="active"><i data-lucide="receipt"></i><span>Transactions</span></a>
-      <a href="admin.html"><i data-lucide="shield"></i><span>User Management</span></a>
-      <a href="reports.html"><i data-lucide="file-bar-chart"></i><span>Reports</span></a>
-    </nav>
+    </main>
 
-    <div class="sidebar-footer">
-      <button class="logout" onclick="logout()"><i data-lucide="log-out"></i><span>Logout</span></button>
-    </div>
-  </aside>
+  </div>
 
-  <!-- ================= MAIN ================= -->
-  <main class="main">
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">
-      <span id="themeIcon"><i data-lucide="moon"></i></span>
-    </button>
+  <!-- ===================================== -->
+  <!-- Toast -->
+  <!-- ===================================== -->
 
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div>
-        <h1>Transactions</h1>
-        <p>Track all sales and inventory activity</p>
-      </div>
-    </div>
+  <div id="toast"></div>
 
-    <!-- CONTROLS -->
-    <div class="controls">
+  <!-- ===================================== -->
+  <!-- Scripts -->
+  <!-- ===================================== -->
 
-      <input 
-        type="text" 
-        id="search" 
-        placeholder=" Search product..." 
-        oninput="resetAndRender()"
-      >
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      <select id="filter" onchange="resetAndRender()">
-        <option value="All">All Categories</option>
-      </select>
+  <script src="app-auth.js"></script>
 
-      <input 
-        type="date" 
-        id="dateFrom" 
-        title="From date"
-        onchange="resetAndRender()"
-      >
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-      <input 
-        type="date" 
-        id="dateTo" 
-        title="To date"
-        onchange="resetAndRender()"
-      >
-    </div>
+  <script src="transactions.js"></script>
 
-    <!-- TABLE -->
-    <div class="table-container" id="tableContainer">
+  <!-- Theme -->
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Product</th>
-            <th>Category</th>
-            <th>Buyer</th> <!-- 🔥 NEW -->
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Date</th>
-            <th>Time</th>
-          </tr>
-        </thead>
+  <script>
 
-        <tbody id="tableBody"></tbody>
-      </table>
+    (function(){
 
-      <!-- EMPTY STATE -->
-      <div id="emptyState" class="empty">
-        No transactions yet
-      </div>
+      const savedTheme =
+        localStorage.getItem(
+          "theme"
+        );
 
-    </div>
+      const isLight =
+        savedTheme === "light";
 
-  </main>
-</div>
+      if(isLight){
 
-<!-- TOAST -->
-<div id="toast"></div>
+        document.body.classList.add(
+          "light-mode"
+        );
+      }
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app-auth.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="transactions.js"></script>
-<script>
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    const isLight = savedTheme === "light";
-    if (isLight) document.body.classList.add("light-mode");
-    const icon = document.getElementById("themeIcon");
-    const toggle = document.getElementById("themeToggle");
-    function refreshThemeIcon(light) {
-      icon.innerHTML = light ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+      const icon =
+        document.getElementById(
+          "themeIcon"
+        );
+
+      const toggle =
+        document.getElementById(
+          "themeToggle"
+        );
+
+      function refreshThemeIcon(light){
+
+        icon.innerHTML = light
+
+          ? '<i data-lucide="sun"></i>'
+
+          : '<i data-lucide="moon"></i>';
+
+        lucide.createIcons();
+      }
+
+      toggle.addEventListener(
+        "click",
+        function(){
+
+          document.body.classList.toggle(
+            "light-mode"
+          );
+
+          const light =
+            document.body.classList.contains(
+              "light-mode"
+            );
+
+          localStorage.setItem(
+            "theme",
+            light
+              ? "light"
+              : "dark"
+          );
+
+          refreshThemeIcon(light);
+        }
+      );
+
+      refreshThemeIcon(isLight);
+
       lucide.createIcons();
-    }
-    toggle.addEventListener("click", function() {
-      document.body.classList.toggle("light-mode");
-      const light = document.body.classList.contains("light-mode");
-      localStorage.setItem("theme", light ? "light" : "dark");
-      refreshThemeIcon(light);
-    });
-    refreshThemeIcon(isLight);
-  })();
-</script>
+
+    })();
+
+  </script>
+
 </body>
 </html>

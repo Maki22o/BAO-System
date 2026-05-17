@@ -48,13 +48,22 @@ function isAdminRole(role){
   return role === "admin_user";
 }
 
-// Current page
+// Admin page check
 
 function currentPageIsAdmin(){
 
   return window.location.pathname
     .toLowerCase()
     .includes("admin.html");
+}
+
+// Backup page check
+
+function currentPageIsBackup(){
+
+  return window.location.pathname
+    .toLowerCase()
+    .includes("backup.html");
 }
 
 // Create missing profile
@@ -182,10 +191,24 @@ function applyRoleBasedNav(role){
       'a[href="admin.html"]'
     );
 
+  const backupLinks =
+    document.querySelectorAll(
+      'a[href="backup.html"]'
+    );
+
   const isAdmin =
     isAdminRole(role);
 
   adminLinks.forEach(link => {
+
+    link.style.display =
+
+      isAdmin
+        ? ""
+        : "none";
+  });
+
+  backupLinks.forEach(link => {
 
     link.style.display =
 
@@ -300,17 +323,22 @@ async function initProtectedPageAuth(){
 
   applyUserInfo();
 
-  // Admin protection
+  // Admin-only pages
 
   if(
-    currentPageIsAdmin() &&
+    (
+      currentPageIsAdmin() ||
+
+      currentPageIsBackup()
+    ) &&
+
     !isAdminRole(role)
   ){
 
     window.location.href =
       "dashboard.html";
 
-    return false;
+      return false;
   }
 
   return true;

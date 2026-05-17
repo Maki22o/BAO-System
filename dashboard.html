@@ -47,7 +47,9 @@
 
 <body>
 
-  <!-- Sidebar overlay -->
+  <!-- ===================================== -->
+  <!-- Sidebar Overlay -->
+  <!-- ===================================== -->
 
   <div
     id="sidebarOverlay"
@@ -55,7 +57,9 @@
     onclick="toggleSidebar()"
   ></div>
 
-  <!-- Mobile menu -->
+  <!-- ===================================== -->
+  <!-- Mobile Menu -->
+  <!-- ===================================== -->
 
   <button
     class="mobile-menu-btn"
@@ -67,126 +71,147 @@
 
   </button>
 
+  <!-- ===================================== -->
   <!-- Layout -->
+  <!-- ===================================== -->
 
   <div class="layout">
 
+    <!-- ===================================== -->
     <!-- Sidebar -->
+    <!-- ===================================== -->
 
     <aside
       id="sidebar"
       class="sidebar"
     >
 
-      <!-- Brand -->
+      <div class="sidebar-inner">
 
-      <header class="sidebar-header">
+        <!-- Brand -->
 
-        <div class="sidebar-brand">
+        <header class="sidebar-header">
 
-          <img
-            src="LSPULOGO3-removebg-preview.png"
-            alt="LSPU Logo"
-            class="sidebar-logo"
-          />
+          <div class="sidebar-brand">
 
-          <div>
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
 
-            <h2>
-              BAO Storage
-            </h2>
+            <div class="brand-copy">
 
-            <p class="sub">
-              Inventory Management
-            </p>
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
 
           </div>
 
-        </div>
+        </header>
 
-      </header>
+        <!-- Navigation -->
 
-      <!-- Navigation -->
+        <nav class="sidebar-nav">
 
-      <nav class="sidebar-nav">
+          <a
+            href="dashboard.html"
+            class="active"
+          >
 
-        <a
-          href="dashboard.html"
-          class="active"
-        >
+            <i data-lucide="layout-dashboard"></i>
 
-          <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
 
-          <span>Dashboard</span>
+          </a>
 
-        </a>
+          <a href="products.html">
 
-        <a href="products.html">
+            <i data-lucide="package"></i>
 
-          <i data-lucide="package"></i>
+            <span>Products</span>
 
-          <span>Products</span>
+          </a>
 
-        </a>
+          <a href="categories.html">
 
-        <a href="categories.html">
+            <i data-lucide="folder"></i>
 
-          <i data-lucide="folder"></i>
+            <span>Categories</span>
 
-          <span>Categories</span>
+          </a>
 
-        </a>
+          <a href="transactions.html">
 
-        <a href="transactions.html">
+            <i data-lucide="receipt"></i>
 
-          <i data-lucide="receipt"></i>
+            <span>Transactions</span>
 
-          <span>Transactions</span>
+          </a>
 
-        </a>
+          <a href="admin.html">
 
-        <a href="admin.html">
+            <i data-lucide="shield"></i>
 
-          <i data-lucide="shield"></i>
+            <span>User Management</span>
 
-          <span>User Management</span>
+          </a>
 
-        </a>
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
 
-        <a href="reports.html">
+            <i data-lucide="database-backup"></i>
 
-          <i data-lucide="file-bar-chart"></i>
+            <span>Backup & Restore</span>
 
-          <span>Reports</span>
+          </a>
 
-        </a>
+          <a href="reports.html">
 
-      </nav>
+            <i data-lucide="file-bar-chart"></i>
 
-      <!-- Footer -->
+            <span>Reports</span>
 
-      <footer class="sidebar-footer">
+          </a>
 
-        <button
-          class="logout"
-          onclick="logout()"
-        >
+        </nav>
 
-          <i data-lucide="log-out"></i>
+        <!-- Footer -->
 
-          <span>Logout</span>
+        <footer class="sidebar-footer">
 
-        </button>
+          <button
+            class="logout"
+            onclick="logout()"
+          >
 
-      </footer>
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
 
     </aside>
 
+    <!-- ===================================== -->
     <!-- Main -->
+    <!-- ===================================== -->
 
     <main class="main">
 
+      <!-- ===================================== -->
       <!-- Topbar -->
+      <!-- ===================================== -->
 
       <header class="topbar">
 
@@ -194,13 +219,22 @@
 
         <div class="topbar-left">
 
+          <div class="page-badge">
+
+            <i data-lucide="sparkles"></i>
+
+            <span>Analytics Overview</span>
+
+          </div>
+
           <h1>
             Dashboard
           </h1>
 
           <p>
-            Welcome back! Here's what's happening
-            with your inventory.
+            Welcome back. Monitor inventory performance,
+            sales insights, stock activity, and system operations
+            in real-time.
           </p>
 
         </div>
@@ -208,32 +242,6 @@
         <!-- Right -->
 
         <div class="topbar-right">
-
-          <!-- User -->
-
-          <div class="user-box">
-
-            <div class="user-avatar">
-
-              <span id="userInitial">
-                A
-              </span>
-
-            </div>
-
-            <div class="user-info">
-
-              <h4 id="userName">
-                User
-              </h4>
-
-              <p id="userRole">
-                Regular User
-              </p>
-
-            </div>
-
-          </div>
 
           <!-- Notifications -->
 
@@ -256,7 +264,7 @@
 
             </button>
 
-            <!-- Notification panel -->
+            <!-- Notification Panel -->
 
             <div
               id="notifPanel"
@@ -265,16 +273,24 @@
 
               <div class="notif-header">
 
-                <h4>
-                  Notifications
-                </h4>
+                <div>
 
-                <span
+                  <h4>Notifications</h4>
+
+                  <p>
+                    System alerts and updates
+                  </p>
+
+                </div>
+
+                <button
                   class="mark-read"
                   onclick="clearNotif()"
                 >
+
                   Mark all as read
-                </span>
+
+                </button>
 
               </div>
 
@@ -284,6 +300,38 @@
                 id="notifList"
                 class="notif-list"
               ></div>
+
+            </div>
+
+          </div>
+
+          <!-- User -->
+
+          <div class="user-box">
+
+            <div class="user-avatar">
+
+              <span id="userInitial">
+
+                A
+
+              </span>
+
+            </div>
+
+            <div class="user-info">
+
+              <h4 id="userName">
+
+                User
+
+              </h4>
+
+              <p id="userRole">
+
+                Regular User
+
+              </p>
 
             </div>
 
@@ -309,130 +357,280 @@
 
       </header>
 
-      <!-- Main content -->
+      <!-- ===================================== -->
+      <!-- Main Content -->
+      <!-- ===================================== -->
 
       <div class="main-content">
 
-        <!-- Stats -->
+        <!-- ===================================== -->
+        <!-- KPI Stats -->
+        <!-- ===================================== -->
 
-        <section class="stats">
+        <section class="stats-grid">
 
-          <article class="card">
+          <!-- Products -->
 
-            <p>Total Products</p>
+          <article class="stats-card">
 
-            <h3 id="totalProducts">
-              0
-            </h3>
+            <div class="stats-icon purple">
 
-          </article>
+              <i data-lucide="package"></i>
 
-          <article class="card">
+            </div>
 
-            <p>Low Stock Items</p>
+            <div class="stats-info">
 
-            <h3 id="lowStock">
-              0
-            </h3>
+              <p>Total Products</p>
 
-          </article>
+              <h3 id="totalProducts">
+                0
+              </h3>
 
-          <article class="card">
-
-            <p>Total Sales</p>
-
-            <h3 id="totalSales">
-              ₱0
-            </h3>
+            </div>
 
           </article>
 
-          <article class="card">
+          <!-- Low Stock -->
 
-            <p>Items Sold</p>
+          <article class="stats-card">
 
-            <h3 id="totalItemsSold">
-              0
-            </h3>
+            <div class="stats-icon red">
+
+              <i data-lucide="triangle-alert"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Low Stock Items</p>
+
+              <h3 id="lowStock">
+                0
+              </h3>
+
+            </div>
 
           </article>
 
-          <article class="card">
+          <!-- Sales -->
 
-            <p>Today's Sales</p>
+          <article class="stats-card">
 
-            <h3 id="dailySales">
-              ₱0
-            </h3>
+            <div class="stats-icon green">
+
+              <i data-lucide="wallet"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Sales</p>
+
+              <h3 id="totalSales">
+                ₱0
+              </h3>
+
+            </div>
 
           </article>
 
-          <article class="card">
+          <!-- Items Sold -->
 
-            <p>Total Value</p>
+          <article class="stats-card">
 
-            <h3 id="totalValue">
-              ₱0
-            </h3>
+            <div class="stats-icon blue">
+
+              <i data-lucide="shopping-cart"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Items Sold</p>
+
+              <h3 id="totalItemsSold">
+                0
+              </h3>
+
+            </div>
+
+          </article>
+
+          <!-- Daily Sales -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon amber">
+
+              <i data-lucide="badge-dollar-sign"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Today's Sales</p>
+
+              <h3 id="dailySales">
+                ₱0
+              </h3>
+
+            </div>
+
+          </article>
+
+          <!-- Inventory Value -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon cyan">
+
+              <i data-lucide="banknote"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Inventory Value</p>
+
+              <h3 id="totalValue">
+                ₱0
+              </h3>
+
+            </div>
 
           </article>
 
         </section>
 
+        <!-- ===================================== -->
         <!-- Charts -->
+        <!-- ===================================== -->
 
-        <section class="grid">
+        <section class="dashboard-grid">
 
-          <div class="panel">
+          <!-- Product Quantities -->
 
-            <h3>
-              Product Quantities
-            </h3>
+          <div class="panel chart-panel">
 
-            <canvas id="barChart"></canvas>
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  Product Quantities
+                </h3>
+
+                <p>
+                  Inventory quantity distribution overview
+                </p>
+
+              </div>
+
+            </div>
+
+            <div class="chart-container">
+
+              <canvas id="barChart"></canvas>
+
+            </div>
 
           </div>
 
-          <div class="panel">
+          <!-- Category Breakdown -->
 
-            <h3>
-              Inventory by Category
-            </h3>
+          <div class="panel chart-panel">
 
-            <canvas id="pieChart"></canvas>
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  Inventory by Category
+                </h3>
+
+                <p>
+                  Product distribution across categories
+                </p>
+
+              </div>
+
+            </div>
+
+            <div class="chart-container">
+
+              <canvas id="pieChart"></canvas>
+
+            </div>
 
           </div>
 
         </section>
 
-        <!-- Extra -->
+        <!-- ===================================== -->
+        <!-- Insights Grid -->
+        <!-- ===================================== -->
 
-        <section class="grid">
+        <section class="dashboard-grid">
+
+          <!-- Low Stock -->
 
           <div class="panel">
 
-            <h3>
+            <div class="panel-header">
 
-              <i
-                data-lucide="triangle-alert"
-                class="panel-icon"
-              ></i>
+              <div>
 
-              Low Stock Alerts
+                <h3>
 
-            </h3>
+                  <i
+                    data-lucide="triangle-alert"
+                    class="panel-icon"
+                  ></i>
 
-            <div id="lowStockList"></div>
+                  Low Stock Alerts
+
+                </h3>
+
+                <p>
+                  Products that require immediate restocking
+                </p>
+
+              </div>
+
+            </div>
+
+            <div
+              id="lowStockList"
+              class="panel-list"
+            ></div>
 
           </div>
 
+          <!-- Recent Activity -->
+
           <div class="panel">
 
-            <h3>
-              Recent Activity
-            </h3>
+            <div class="panel-header">
 
-            <div id="recentActivity"></div>
+              <div>
+
+                <h3>
+                  Recent Activity
+                </h3>
+
+                <p>
+                  Latest inventory and transaction activities
+                </p>
+
+              </div>
+
+            </div>
+
+            <div
+              id="recentActivity"
+              class="panel-list"
+            ></div>
 
           </div>
 
@@ -444,7 +642,9 @@
 
   </div>
 
+  <!-- ===================================== -->
   <!-- Scripts -->
+  <!-- ===================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 

@@ -3,41 +3,39 @@
 
 <head>
 
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  >
+  />
 
-  <title>
-    User Management | BAO Storage
-  </title>
+  <title>User Management | BAO Storage</title>
 
   <!-- Fonts -->
 
   <link
     rel="preconnect"
     href="https://fonts.googleapis.com"
-  >
+  />
 
   <link
     rel="preconnect"
     href="https://fonts.gstatic.com"
     crossorigin
-  >
+  />
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
-  >
+  />
 
   <!-- CSS -->
 
   <link
     rel="stylesheet"
     href="admin.css"
-  >
+  />
 
 </head>
 
@@ -45,121 +43,136 @@
 
   <div class="layout">
 
-    <!-- =====================================
-         SIDEBAR
-    ====================================== -->
+    <!-- ========================= -->
+    <!-- Sidebar -->
+    <!-- ========================= -->
 
     <aside class="sidebar">
 
-      <header class="sidebar-header">
+      <div class="sidebar-inner">
 
-        <div class="sidebar-brand">
+        <!-- Brand -->
 
-          <img
-            src="LSPULOGO3-removebg-preview.png"
-            alt="LSPU Logo"
-            class="sidebar-logo"
-          >
+        <header class="sidebar-header">
 
-          <div>
+          <div class="sidebar-brand">
 
-            <h2>
-              BAO Storage
-            </h2>
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
 
-            <p class="sub">
-              Inventory Management
-            </p>
+            <div class="brand-copy">
+
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
 
           </div>
 
-        </div>
+        </header>
 
-      </header>
+        <!-- Navigation -->
 
-      <!-- NAVIGATION -->
+        <nav class="sidebar-nav">
 
-      <nav class="sidebar-nav">
+          <a href="dashboard.html">
 
-        <a href="dashboard.html">
+            <i data-lucide="layout-dashboard"></i>
 
-          <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
 
-          <span>Dashboard</span>
+          </a>
 
-        </a>
+          <a href="products.html">
 
-        <a href="products.html">
+            <i data-lucide="package"></i>
 
-          <i data-lucide="package"></i>
+            <span>Products</span>
 
-          <span>Products</span>
+          </a>
 
-        </a>
+          <a href="categories.html">
 
-        <a href="categories.html">
+            <i data-lucide="folder"></i>
 
-          <i data-lucide="folder"></i>
+            <span>Categories</span>
 
-          <span>Categories</span>
+          </a>
 
-        </a>
+          <a href="transactions.html">
 
-        <a href="transactions.html">
+            <i data-lucide="receipt"></i>
 
-          <i data-lucide="receipt"></i>
+            <span>Transactions</span>
 
-          <span>Transactions</span>
+          </a>
 
-        </a>
+          <a
+            href="admin.html"
+            class="active"
+          >
 
-        <a
-          href="admin.html"
-          class="active"
-        >
+            <i data-lucide="shield"></i>
 
-          <i data-lucide="shield"></i>
+            <span>User Management</span>
 
-          <span>User Management</span>
+          </a>
 
-        </a>
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
 
-        <a href="reports.html">
+            <i data-lucide="database-backup"></i>
 
-          <i data-lucide="file-bar-chart"></i>
+            <span>Backup & Restore</span>
 
-          <span>Reports</span>
+          </a>
 
-        </a>
+          <a href="reports.html">
 
-      </nav>
+            <i data-lucide="file-bar-chart"></i>
 
-      <!-- FOOTER -->
+            <span>Reports</span>
 
-      <footer class="sidebar-footer">
+          </a>
 
-        <button
-          class="logout"
-          onclick="logout()"
-        >
+        </nav>
 
-          <i data-lucide="log-out"></i>
+        <!-- Footer -->
 
-          <span>Logout</span>
+        <footer class="sidebar-footer">
 
-        </button>
+          <button
+            class="logout"
+            onclick="logout()"
+          >
 
-      </footer>
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
 
     </aside>
 
-    <!-- =====================================
-         MAIN
-    ====================================== -->
+    <!-- ========================= -->
+    <!-- Main -->
+    <!-- ========================= -->
 
     <main class="main">
 
-      <!-- THEME TOGGLE -->
+      <!-- Floating Theme Toggle -->
 
       <button
         id="themeToggle"
@@ -175,23 +188,29 @@
 
       </button>
 
-      <!-- TOPBAR -->
+      <!-- ========================= -->
+      <!-- Topbar -->
+      <!-- ========================= -->
 
-      <div class="topbar">
+      <header class="topbar">
 
-        <div>
+        <div class="topbar-left">
 
-          <h1>
-            User Management
-          </h1>
+          <div class="page-badge">
+
+            <i data-lucide="shield-check"></i>
+
+            <span>Administration</span>
+
+          </div>
+
+          <h1>User Management</h1>
 
           <p>
-            Manage user access and role permissions
+            Manage system users, permissions, access roles, and administrative controls.
           </p>
 
         </div>
-
-        <!-- ACTIONS -->
 
         <div class="topbar-actions">
 
@@ -219,113 +238,219 @@
 
         </div>
 
-      </div>
+      </header>
 
-      <!-- CONTENT -->
+      <!-- ========================= -->
+      <!-- Main Content -->
+      <!-- ========================= -->
 
       <div class="main-content">
 
-        <!-- STATS -->
+        <!-- ========================= -->
+        <!-- Stats -->
+        <!-- ========================= -->
 
-        <div class="stats">
+        <section class="stats-grid">
 
-          <div class="card">
+          <!-- Total Users -->
 
-            <p>Total Users</p>
+          <article class="stats-card">
 
-            <h3 id="totalUsers">
-              0
-            </h3>
+            <div class="stats-icon purple">
+
+              <i data-lucide="users"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Total Users</p>
+
+              <h3 id="totalUsers">0</h3>
+
+            </div>
+
+          </article>
+
+          <!-- Admin Users -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon blue">
+
+              <i data-lucide="shield-check"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Admin Users</p>
+
+              <h3 id="totalAdmins">0</h3>
+
+            </div>
+
+          </article>
+
+          <!-- Regular Users -->
+
+          <article class="stats-card">
+
+            <div class="stats-icon green">
+
+              <i data-lucide="user"></i>
+
+            </div>
+
+            <div class="stats-info">
+
+              <p>Regular Users</p>
+
+              <h3 id="totalStaff">0</h3>
+
+            </div>
+
+          </article>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- Controls -->
+        <!-- ========================= -->
+
+        <section class="controls-section">
+
+          <div class="controls-left">
+
+            <!-- Search -->
+
+            <div class="search-box">
+
+              <div class="search-icon">
+
+                <i data-lucide="search"></i>
+
+              </div>
+
+              <input
+                id="userSearch"
+                type="text"
+                placeholder="Search users by name, email, or role..."
+                oninput="renderUsers()"
+              />
+
+            </div>
 
           </div>
 
-          <div class="card">
+          <div class="controls-right">
 
-            <p>Admin Users</p>
-
-            <h3 id="totalAdmins">
-              0
-            </h3>
-
-          </div>
-
-          <div class="card">
-
-            <p>Regular Users</p>
-
-            <h3 id="totalStaff">
-              0
-            </h3>
-
-          </div>
-
-        </div>
-
-        <!-- SEARCH -->
-
-        <div class="controls">
-
-          <div class="search-box">
-
-            <i data-lucide="search"></i>
-
-            <input
-              id="userSearch"
-              type="text"
-              placeholder="Search users by name, email, or role"
-              oninput="renderUsers()"
+            <button
+              class="control-btn"
+              onclick="refreshAll()"
             >
 
+              <i data-lucide="rotate-cw"></i>
+
+              <span>Reload</span>
+
+            </button>
+
           </div>
 
-        </div>
+        </section>
 
-        <!-- USERS TABLE -->
+        <!-- ========================= -->
+        <!-- Users Table -->
+        <!-- ========================= -->
 
-        <div class="table-container">
+        <section class="table-panel">
 
-          <table>
+          <div class="table-header">
 
-            <thead>
+            <div>
 
-              <tr>
+              <h2>System Users</h2>
 
-                <th>Full Name</th>
+              <p>
+                Manage user roles, permissions, and account access.
+              </p>
 
-                <th>Email</th>
+            </div>
 
-                <th>Role</th>
+          </div>
 
-                <th>Created</th>
+          <div class="table-wrapper">
 
-                <th>Actions</th>
+            <table class="users-table">
 
-              </tr>
+              <thead>
 
-            </thead>
+                <tr>
 
-            <tbody id="userTable"></tbody>
+                  <th>User</th>
 
-          </table>
+                  <th>Email Address</th>
 
-        </div>
+                  <th>Role</th>
 
-        <!-- AUDIT LOGS -->
+                  <th>Created</th>
 
-        <div
-          class="table-container"
-          style="margin-top:20px;"
-        >
+                  <th class="actions-column">Actions</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody id="userTable">
+
+                <tr class="loading-row">
+
+                  <td colspan="5">
+
+                    <div class="table-loading">
+
+                      <i data-lucide="loader-circle"></i>
+
+                      <span>Loading users...</span>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- Audit Logs -->
+        <!-- ========================= -->
+
+        <section class="logs-panel">
 
           <div class="section-header">
 
-            <h3>
+            <div>
 
-              <i data-lucide="clipboard-list"></i>
+              <h2>
 
-              Audit Logs
+                <i data-lucide="clipboard-list"></i>
 
-            </h3>
+                Audit Logs
+
+              </h2>
+
+              <p>
+                Monitor recent user management and permission activities.
+              </p>
+
+            </div>
 
           </div>
 
@@ -334,7 +459,7 @@
             class="log-list"
           ></div>
 
-        </div>
+        </section>
 
       </div>
 
@@ -342,26 +467,49 @@
 
   </div>
 
-  <!-- =====================================
-       CREATE USER MODAL
-  ====================================== -->
+  <!-- ========================= -->
+  <!-- User Modal -->
+  <!-- ========================= -->
 
   <div
     id="modal"
     class="modal"
   >
 
-    <div class="modal-content">
+    <div class="modal-overlay"></div>
+
+    <div class="modal-content user-modal">
+
+      <!-- Header -->
 
       <div class="modal-header">
 
-        <h3 id="modalTitle">
-          Create User
-        </h3>
+        <div>
+
+          <div class="modal-badge">
+
+            <i data-lucide="user-cog"></i>
+
+            <span>User Access</span>
+
+          </div>
+
+          <h3 id="modalTitle">
+
+            Create User
+
+          </h3>
+
+          <p>
+            Configure account credentials, permissions, and access level.
+          </p>
+
+        </div>
 
         <button
           class="close-icon"
           onclick="closeModal()"
+          aria-label="Close modal"
         >
 
           <i data-lucide="x"></i>
@@ -370,83 +518,107 @@
 
       </div>
 
-      <!-- FORM -->
+      <!-- Form -->
 
       <div class="modal-form">
 
-        <!-- FULL NAME -->
+        <!-- Full Name -->
 
         <div class="form-group">
 
-          <label>
+          <label for="fullName">
+
             Full Name
+
           </label>
 
           <input
             type="text"
             id="fullName"
             placeholder="Enter full name"
-          >
+            autocomplete="off"
+          />
 
         </div>
 
-        <!-- EMAIL -->
+        <!-- Email -->
 
         <div class="form-group">
 
-          <label>
+          <label for="email">
+
             Email Address
+
           </label>
 
           <input
             type="email"
             id="email"
-            placeholder="Enter email"
-          >
+            placeholder="Enter email address"
+            autocomplete="off"
+          />
 
         </div>
 
-        <!-- PASSWORD -->
+        <!-- Password -->
 
         <div class="form-group">
 
-          <label>
+          <label for="password">
+
             Password
+
           </label>
 
           <input
             type="password"
             id="password"
-            placeholder="Enter password"
-          >
+            placeholder="Enter secure password"
+            autocomplete="new-password"
+          />
 
         </div>
 
-        <!-- ROLE -->
+        <!-- Role -->
 
         <div class="form-group">
 
-          <label>
+          <label for="role">
+
             Role
+
           </label>
 
-          <select id="role">
+          <div class="select-wrapper">
 
-            <option value="regular_user">
-              Regular User
-            </option>
+            <select id="role">
 
-            <option value="admin_user">
-              Admin User
-            </option>
+              <option value="regular_user">
 
-          </select>
+                Regular User
+
+              </option>
+
+              <option value="admin_user">
+
+                Admin User
+
+              </option>
+
+            </select>
+
+            <i
+              data-lucide="chevron-down"
+              class="select-icon"
+            ></i>
+
+          </div>
 
         </div>
 
       </div>
 
-      <!-- ACTIONS -->
+      <!-- Actions -->
 
       <div class="modal-actions">
 
@@ -464,7 +636,9 @@
           onclick="saveUser()"
         >
 
-          Create User
+          <i data-lucide="save"></i>
+
+          <span>Save User</span>
 
         </button>
 
@@ -474,11 +648,15 @@
 
   </div>
 
-  <!-- TOAST -->
+  <!-- ========================= -->
+  <!-- Toast -->
+  <!-- ========================= -->
 
   <div id="toast"></div>
 
-  <!-- SCRIPTS -->
+  <!-- ========================= -->
+  <!-- Scripts -->
+  <!-- ========================= -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -488,79 +666,10 @@
 
   <script src="admin.js"></script>
 
-  <!-- THEME -->
-
   <script>
-
-    (function(){
-
-      const savedTheme =
-        localStorage.getItem(
-          "theme"
-        );
-
-      const isLight =
-        savedTheme === "light";
-
-      if(isLight){
-
-        document.body.classList.add(
-          "light-mode"
-        );
-      }
-
-      const icon =
-        document.getElementById(
-          "themeIcon"
-        );
-
-      const toggle =
-        document.getElementById(
-          "themeToggle"
-        );
-
-      function refreshThemeIcon(light){
-
-        icon.innerHTML = light
-
-          ? '<i data-lucide="sun"></i>'
-
-          : '<i data-lucide="moon"></i>';
-
-        lucide.createIcons();
-      }
-
-      toggle.addEventListener(
-        "click",
-        function(){
-
-          document.body.classList.toggle(
-            "light-mode"
-          );
-
-          const light =
-            document.body.classList.contains(
-              "light-mode"
-            );
-
-          localStorage.setItem(
-            "theme",
-            light
-              ? "light"
-              : "dark"
-          );
-
-          refreshThemeIcon(light);
-        }
-      );
-
-      refreshThemeIcon(isLight);
-
-      lucide.createIcons();
-
-    })();
-
+    lucide.createIcons();
   </script>
 
 </body>
+
 </html>

@@ -1,10 +1,17 @@
+const supabaseClient =
+  window.appSupabase;
+
 let profiles = [];
 
 let logs = [];
 
 let editId = null;
 
-// Role label
+let savingUser = false;
+
+/* =========================================
+   ROLE LABEL
+========================================= */
 
 function roleLabel(role){
 
@@ -15,7 +22,9 @@ function roleLabel(role){
     : "Regular User";
 }
 
-// Badge
+/* =========================================
+   ROLE BADGE
+========================================= */
 
 function roleBadgeClass(role){
 
@@ -26,7 +35,9 @@ function roleBadgeClass(role){
     : "staff";
 }
 
-// Toast
+/* =========================================
+   TOAST
+========================================= */
 
 function showToast(message){
 
@@ -40,18 +51,22 @@ function showToast(message){
   toast.innerText =
     message;
 
-  toast.style.display =
-    "block";
+  toast.classList.add(
+    "show"
+  );
 
   setTimeout(() => {
 
-    toast.style.display =
-      "none";
+    toast.classList.remove(
+      "show"
+    );
 
   }, 2300);
 }
 
-// Logout
+/* =========================================
+   LOGOUT
+========================================= */
 
 async function logout(){
 
@@ -62,7 +77,9 @@ async function logout(){
     "index.html";
 }
 
-// Open modal
+/* =========================================
+   OPEN MODAL
+========================================= */
 
 function openModal(){
 
@@ -96,7 +113,9 @@ function openModal(){
     "flex";
 }
 
-// Close modal
+/* =========================================
+   CLOSE MODAL
+========================================= */
 
 function closeModal(){
 
@@ -106,7 +125,9 @@ function closeModal(){
     "none";
 }
 
-// Logs
+/* =========================================
+   ADD LOG
+========================================= */
 
 async function addLog(text){
 
@@ -130,7 +151,9 @@ async function addLog(text){
   }
 }
 
-// Fetch logs
+/* =========================================
+   FETCH LOGS
+========================================= */
 
 async function fetchLogs(){
 
@@ -160,7 +183,9 @@ async function fetchLogs(){
   logs = data || [];
 }
 
-// Render logs
+/* =========================================
+   RENDER LOGS
+========================================= */
 
 function renderLogs(){
 
@@ -196,7 +221,9 @@ function renderLogs(){
     `).join("");
 }
 
-// Fetch users
+/* =========================================
+   FETCH USERS
+========================================= */
 
 async function fetchProfiles(){
 
@@ -228,7 +255,9 @@ async function fetchProfiles(){
   profiles = data || [];
 }
 
-// Stats
+/* =========================================
+   UPDATE STATS
+========================================= */
 
 function updateStats(){
 
@@ -262,7 +291,9 @@ function updateStats(){
     regular;
 }
 
-// Render users
+/* =========================================
+   RENDER USERS
+========================================= */
 
 function renderUsers(){
 
@@ -311,6 +342,24 @@ function renderUsers(){
       );
     });
 
+  if(filtered.length === 0){
+
+    table.innerHTML = `
+
+      <tr>
+
+        <td colspan="5">
+
+          No users found
+
+        </td>
+
+      </tr>
+    `;
+
+    return;
+  }
+
   filtered.forEach(profile => {
 
     table.innerHTML += `
@@ -319,7 +368,33 @@ function renderUsers(){
 
         <td>
 
-          ${profile.fullname || "-"}
+          <div class="user-cell">
+
+            <div class="user-avatar">
+
+              ${
+                String(
+                  profile.fullname || "U"
+                )
+                .charAt(0)
+                .toUpperCase()
+              }
+
+            </div>
+
+            <div class="user-meta">
+
+              <strong>
+
+                ${
+                  profile.fullname || "-"
+                }
+
+              </strong>
+
+            </div>
+
+          </div>
 
         </td>
 
@@ -353,33 +428,38 @@ function renderUsers(){
 
         </td>
 
-        <td class="actions">
+        <td>
 
-          <button
-            class="edit"
-            onclick="editUser('${profile.id}')"
-          >
+          <div class="actions">
 
-            Edit
+            <button
+              class="edit"
+              onclick="editUser('${profile.id}')"
+            >
 
-          </button>
+              Edit
 
-          <button
-            onclick="toggleRole('${profile.id}')"
-          >
+            </button>
 
-            Toggle Role
+            <button
+              class="toggle"
+              onclick="toggleRole('${profile.id}')"
+            >
 
-          </button>
+              Toggle Role
 
-          <button
-            class="delete"
-            onclick="deleteUser('${profile.id}')"
-          >
+            </button>
 
-            Delete
+            <button
+              class="delete"
+              onclick="deleteUser('${profile.id}')"
+            >
 
-          </button>
+              Delete
+
+            </button>
+
+          </div>
 
         </td>
 
@@ -392,7 +472,9 @@ function renderUsers(){
   renderLogs();
 }
 
-// Edit
+/* =========================================
+   EDIT USER
+========================================= */
 
 function editUser(id){
 
@@ -403,7 +485,14 @@ function editUser(id){
       String(id)
     );
 
-  if(!profile) return;
+  if(!profile){
+
+    showToast(
+      "User not found"
+    );
+
+    return;
+  }
 
   editId = profile.id;
 
@@ -429,7 +518,7 @@ function editUser(id){
   document.getElementById(
     "role"
   ).value =
-    profile.role;
+    profile.role || "regular_user";
 
   document.getElementById(
     "modal"
@@ -437,45 +526,67 @@ function editUser(id){
     "flex";
 }
 
-// Save
+/* =========================================
+   SAVE USER
+========================================= */
 
 async function saveUser(){
 
-  const fullName =
-    document.getElementById(
-      "fullName"
-    ).value.trim();
+  if(savingUser){
 
-  const email =
-    document.getElementById(
-      "email"
-    ).value.trim();
-
-  const password =
-    document.getElementById(
-      "password"
-    ).value.trim();
-
-  const role =
-    document.getElementById(
-      "role"
-    ).value;
-
-  if(
-    !fullName ||
-    !email
-  ){
-
-    return showToast(
-      "Fill all fields"
-    );
+    return;
   }
 
-  // Edit existing
+  savingUser = true;
 
-  if(editId){
+  const saveBtn =
+    document.querySelector(
+      ".btn-save"
+    );
 
-    try{
+  if(saveBtn){
+
+    saveBtn.disabled = true;
+
+    saveBtn.innerText =
+      "Saving...";
+  }
+
+  try{
+
+    const fullName =
+      document.getElementById(
+        "fullName"
+      ).value.trim();
+
+    const email =
+      document.getElementById(
+        "email"
+      ).value.trim();
+
+    const password =
+      document.getElementById(
+        "password"
+      ).value.trim();
+
+    const role =
+      document.getElementById(
+        "role"
+      ).value;
+
+    if(
+      !fullName ||
+      !email
+    ){
+
+      throw new Error(
+        "Please complete all fields"
+      );
+    }
+
+    // Edit existing
+
+    if(editId){
 
       const { error } =
         await window.appSupabase
@@ -505,102 +616,79 @@ async function saveUser(){
         "User updated"
       );
 
-      editId = null;
+    }else{
 
-      closeModal();
+      if(password.length < 6){
 
-      await refreshAll();
+        throw new Error(
+          "Password must be at least 6 characters"
+        );
+      }
 
-      return;
+      const { data, error } =
 
-    }catch(error){
+        await window.appSupabase.auth
+          .signUp({
 
-      console.error(error);
+            email,
+            password,
+
+            options: {
+
+              data: {
+
+                fullname:
+                  fullName
+              }
+            }
+          });
+
+      if(error) throw error;
+
+      const userId =
+        data?.user?.id;
+
+      if(!userId){
+
+        throw new Error(
+          "Unable to create user"
+        );
+      }
+
+      const { error:profileError } =
+
+        await window.appSupabase
+
+          .from("profiles")
+
+          .upsert([{
+
+            id: userId,
+
+            fullname:
+              fullName,
+
+            email,
+
+            role
+          }]);
+
+      if(profileError)
+        throw profileError;
+
+      await addLog(
+
+        `Created user: ${email}`
+      );
 
       showToast(
-        "Unable to update user"
-      );
-
-      return;
-    }
-  }
-
-  // Create new user
-
-  if(password.length < 6){
-
-    return showToast(
-      "Password must be at least 6 characters"
-    );
-  }
-
-  try{
-
-    // Register user
-
-    const { data, error } =
-
-      await window.appSupabase.auth
-        .signUp({
-
-          email,
-          password,
-
-          options: {
-
-            data: {
-
-              fullname:
-                fullName
-            }
-          }
-        });
-
-    if(error) throw error;
-
-    const userId =
-      data?.user?.id;
-
-    if(!userId){
-
-      throw new Error(
-        "Unable to create user"
+        "User created"
       );
     }
-
-    // Update role
-
-    const { error:profileError } =
-
-      await window.appSupabase
-
-        .from("profiles")
-
-        .upsert([{
-
-          id: userId,
-
-          fullname:
-            fullName,
-
-          email,
-
-          role
-        }]);
-
-    if(profileError)
-      throw profileError;
-
-    await addLog(
-
-      `Created user: ${email}`
-    );
-
-    showToast(
-      "User created"
-    );
 
     closeModal();
+
+    editId = null;
 
     await refreshAll();
 
@@ -609,15 +697,27 @@ async function saveUser(){
     console.error(error);
 
     showToast(
-
-      error?.message ||
-
-      "Unable to create user"
+      error.message ||
+      "Unable to save user"
     );
+
+  }finally{
+
+    savingUser = false;
+
+    if(saveBtn){
+
+      saveBtn.disabled = false;
+
+      saveBtn.innerText =
+        "Save User";
+    }
   }
 }
 
-// Toggle role
+/* =========================================
+   TOGGLE ROLE
+========================================= */
 
 async function toggleRole(id){
 
@@ -628,7 +728,14 @@ async function toggleRole(id){
       String(id)
     );
 
-  if(!profile) return;
+  if(!profile){
+
+    showToast(
+      "User not found"
+    );
+
+    return;
+  }
 
   const nextRole =
 
@@ -655,6 +762,13 @@ async function toggleRole(id){
 
     if(error) throw error;
 
+    // Update local state immediately
+
+    profile.role =
+      nextRole;
+
+    renderUsers();
+
     await addLog(
 
       `Changed role for ${profile.email}`
@@ -663,8 +777,6 @@ async function toggleRole(id){
     showToast(
       "Role updated"
     );
-
-    await refreshAll();
 
   }catch(error){
 
@@ -676,7 +788,9 @@ async function toggleRole(id){
   }
 }
 
-// Delete
+/* =========================================
+   DELETE USER
+========================================= */
 
 async function deleteUser(id){
 
@@ -687,13 +801,21 @@ async function deleteUser(id){
       String(id)
     );
 
-  if(!profile) return;
+  if(!profile){
 
-  if(!confirm(
+    showToast(
+      "User not found"
+    );
 
-    `Delete profile for ${profile.email}?`
+    return;
+  }
 
-  )) return;
+  const confirmed =
+    confirm(
+      `Delete profile for ${profile.email}?`
+    );
+
+  if(!confirmed) return;
 
   try{
 
@@ -708,6 +830,17 @@ async function deleteUser(id){
 
     if(error) throw error;
 
+    // Remove locally immediately
+
+    profiles =
+      profiles.filter(item =>
+
+        String(item.id) !==
+        String(id)
+      );
+
+    renderUsers();
+
     await addLog(
 
       `Deleted profile: ${profile.email}`
@@ -716,8 +849,6 @@ async function deleteUser(id){
     showToast(
       "Profile deleted"
     );
-
-    await refreshAll();
 
   }catch(error){
 
@@ -729,9 +860,32 @@ async function deleteUser(id){
   }
 }
 
-// Refresh
+/* =========================================
+   REFRESH
+========================================= */
 
 async function refreshAll(){
+
+  const table =
+    document.getElementById(
+      "userTable"
+    );
+
+  if(table){
+
+    table.innerHTML = `
+
+      <tr>
+
+        <td colspan="5">
+
+          Loading users...
+
+        </td>
+
+      </tr>
+    `;
+  }
 
   await fetchProfiles();
 
@@ -740,7 +894,9 @@ async function refreshAll(){
   renderUsers();
 }
 
-// Init
+/* =========================================
+   INIT
+========================================= */
 
 window.addEventListener(
   "load",
@@ -766,6 +922,29 @@ window.addEventListener(
 
     await refreshAll();
 
+    // Backup RBAC
+
+    const backupLink =
+      document.getElementById(
+        "backupLink"
+      );
+
+    if(backupLink){
+
+      backupLink.style.display =
+
+        window.appAuth.role ===
+        "admin_user"
+
+        ? ""
+
+        : "none";
+    }
+
     lucide.createIcons();
+
+    console.log(
+      "Admin page initialized successfully"
+    );
   }
 );

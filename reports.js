@@ -1,14 +1,5 @@
-const SUPABASE_URL =
-  "https://dpdchbusvfktlqjaxdlb.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_ddIRIgAUNFVLtcz3EpvXfw_5HN2Jeqg";
-
 const supabaseClient =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+  window.appSupabase;
 
 let currentUser = null;
 
@@ -18,7 +9,28 @@ let categoryChart = null;
 
 let transactions = [];
 
-// Auth
+/* =========================================
+   HELPERS
+========================================= */
+
+function getEl(id){
+
+  return document.getElementById(id);
+}
+
+function peso(value){
+
+  return `₱${Number(value || 0).toLocaleString()}`;
+}
+
+function safeNumber(value){
+
+  return Number(value || 0);
+}
+
+/* =========================================
+   AUTH
+========================================= */
 
 async function checkAuth(){
 
@@ -34,14 +46,48 @@ async function checkAuth(){
   return true;
 }
 
-// Helpers
+/* =========================================
+   TOAST
+========================================= */
 
-function getEl(id){
+function showToast(message){
 
-  return document.getElementById(id);
+  let toast =
+    getEl("toast");
+
+  if(!toast){
+
+    toast =
+      document.createElement(
+        "div"
+      );
+
+    toast.id = "toast";
+
+    document.body.appendChild(
+      toast
+    );
+  }
+
+  toast.innerText =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+  setTimeout(() => {
+
+    toast.classList.remove(
+      "show"
+    );
+
+  }, 2600);
 }
 
-// Logout
+/* =========================================
+   LOGOUT
+========================================= */
 
 function logout(){
 
@@ -54,51 +100,62 @@ function logout(){
     });
 }
 
-// Fetch reports
+/* =========================================
+   FETCH TRANSACTIONS
+========================================= */
 
 async function fetchTransactions(){
 
-  const { data, error } =
-    await supabaseClient
+  try{
 
-      .from("transactions")
+    const { data, error } =
+      await supabaseClient
 
-      .select(`
-        *,
-        products (
-          id,
-          name,
-          category_id,
-          price,
-          categories (
+        .from("transactions")
+
+        .select(`
+          *,
+          products (
             id,
-            name
+            name,
+            category_id,
+            price,
+            categories (
+              id,
+              name
+            )
           )
-        )
-      `)
+        `)
 
-      .order("created_at", {
+        .order("created_at", {
 
-        ascending: true
-      });
+          ascending: true
+        });
 
-  if(error){
+    if(error){
+
+      throw error;
+    }
+
+    transactions = data || [];
+
+  }catch(error){
 
     console.error(error);
 
     transactions = [];
 
-    return;
+    showToast(
+      "Unable to load reports"
+    );
   }
-
-  transactions = data || [];
 }
 
-// Reports
+/* =========================================
+   FILTER TRANSACTIONS
+========================================= */
 
-async function loadReports(){
-
-  await fetchTransactions();
+function filterTransactions(){
 
   const start =
     getEl("startDate")?.value;
@@ -110,7 +167,9 @@ async function loadReports(){
 
     start
 
-    ? new Date(`${start}T00:00:00`)
+    ? new Date(
+        `${start}T00:00:00`
+      )
 
     : null;
 
@@ -118,12 +177,14 @@ async function loadReports(){
 
     end
 
-    ? new Date(`${end}T23:59:59`)
+    ? new Date(
+        `${end}T23:59:59`
+      )
 
     : null;
 
-  let filtered =
-    transactions.filter(transaction => {
+  return transactions.filter(
+    transaction => {
 
       const date =
         new Date(
@@ -137,17 +198,23 @@ async function loadReports(){
         return false;
 
       return true;
-    });
+    }
+  );
+}
 
-  // Totals
+/* =========================================
+   KPI
+========================================= */
+
+function renderKPIs(filtered){
 
   const totalSales =
     filtered.reduce(
       (sum, transaction) =>
 
         sum +
-        Number(
-          transaction.total || 0
+        safeNumber(
+          transaction.total
         ),
 
       0
@@ -161,8 +228,8 @@ async function loadReports(){
       (sum, transaction) =>
 
         sum +
-        Number(
-          transaction.quantity || 0
+        safeNumber(
+          transaction.quantity
         ),
 
       0
@@ -177,11 +244,9 @@ async function loadReports(){
 
     : 0;
 
-  // KPI
-
   getEl("totalSales")
     .innerText =
-      `₱${totalSales.toLocaleString()}`;
+      peso(totalSales);
 
   getEl("totalTxns")
     .innerText =
@@ -189,13 +254,28 @@ async function loadReports(){
 
   getEl("avgSale")
     .innerText =
-      `₱${averageSale.toFixed(2)}`;
+      peso(
+        averageSale.toFixed(2)
+      );
 
   getEl("totalItems")
     .innerText =
       totalItems;
 
-  // Product performance
+  return {
+
+    totalSales,
+    totalTransactions,
+    totalItems,
+    averageSale
+  };
+}
+
+/* =========================================
+   PRODUCT ANALYTICS
+========================================= */
+
+function buildProductAnalytics(filtered){
 
   const productMap = {};
 
@@ -214,9 +294,9 @@ async function loadReports(){
 
       "Uncategorized";
 
-    const price =
-      Number(
-        transaction.products?.price || 0
+    const productPrice =
+      safeNumber(
+        transaction.products?.price
       );
 
     if(!productMap[productName]){
@@ -230,158 +310,134 @@ async function loadReports(){
 
         revenue: 0,
 
-        avgPrice: price
+        avgPrice:
+          productPrice
       };
     }
 
     productMap[productName]
-      .sold += Number(
-        transaction.quantity || 0
+      .sold += safeNumber(
+        transaction.quantity
       );
 
     productMap[productName]
-      .revenue += Number(
-        transaction.total || 0
+      .revenue += safeNumber(
+        transaction.total
       );
   });
 
-  // Table
+  return productMap;
+}
 
-  const table =
+/* =========================================
+   REPORT TABLE
+========================================= */
+
+function renderReportTable(productMap){
+
+  const reportTable =
     getEl("reportTable");
 
-  if(table){
+  if(!reportTable) return;
 
-    table.innerHTML = "";
+  reportTable.innerHTML = "";
 
-    const sorted =
-      Object.entries(productMap)
+  const sorted =
+    Object.entries(productMap)
 
-        .sort(
-          (a, b) =>
+      .sort(
+        (a, b) =>
 
-            b[1].revenue -
+          b[1].revenue -
+          a[1].revenue
+      );
 
-            a[1].revenue
-        );
+  if(sorted.length === 0){
 
-    if(sorted.length === 0){
+    reportTable.innerHTML = `
 
-      table.innerHTML = `
+      <tr class="loading-row">
 
-        <tr>
+        <td colspan="5">
 
-          <td colspan="5">
+          No report data found
 
-            No data found
+        </td>
 
-          </td>
+      </tr>
+    `;
 
-        </tr>
-      `;
-    }
-
-    sorted.forEach(([name, data]) => {
-
-      table.innerHTML += `
-
-        <tr>
-
-          <td>
-
-            ${name}
-
-          </td>
-
-          <td>
-
-            ${data.category}
-
-          </td>
-
-          <td>
-
-            ${data.sold}
-
-          </td>
-
-          <td>
-
-            ₱${data.revenue.toLocaleString()}
-
-          </td>
-
-          <td>
-
-            ₱${data.avgPrice.toFixed(2)}
-
-          </td>
-
-        </tr>
-      `;
-    });
+    return;
   }
 
-  // Insights
+  sorted.forEach(([name, data]) => {
+
+    reportTable.innerHTML += `
+
+      <tr>
+
+        <td>
+
+          ${name}
+
+        </td>
+
+        <td>
+
+          ${data.category}
+
+        </td>
+
+        <td>
+
+          ${data.sold}
+
+        </td>
+
+        <td>
+
+          ${peso(data.revenue)}
+
+        </td>
+
+        <td>
+
+          ${peso(data.avgPrice)}
+
+        </td>
+
+      </tr>
+    `;
+  });
+}
+
+/* =========================================
+   INSIGHTS
+========================================= */
+
+function renderInsights(
+  productMap,
+  totals
+){
 
   const insights =
     getEl("insights");
 
-  if(insights){
+  if(!insights) return;
 
-    insights.innerHTML = "";
+  insights.innerHTML = "";
 
-    const sorted =
-      Object.entries(productMap)
+  const sorted =
+    Object.entries(productMap)
 
-        .sort(
-          (a, b) =>
+      .sort(
+        (a, b) =>
 
-            b[1].revenue -
+          b[1].revenue -
+          a[1].revenue
+      );
 
-            a[1].revenue
-        );
-
-    if(sorted.length > 0){
-
-      insights.innerHTML += `
-
-        <div class="insight-item">
-
-          <div class="insight-label">
-
-            Top Product
-
-          </div>
-
-          <div class="insight-value">
-
-            ${sorted[0][0]}
-
-          </div>
-
-        </div>
-      `;
-
-      insights.innerHTML += `
-
-        <div class="insight-item">
-
-          <div class="insight-label">
-
-            Top Category
-
-          </div>
-
-          <div class="insight-value">
-
-            ${sorted[0][1].category}
-
-          </div>
-
-        </div>
-      `;
-    }
+  if(sorted.length > 0){
 
     insights.innerHTML += `
 
@@ -389,13 +445,32 @@ async function loadReports(){
 
         <div class="insight-label">
 
-          Total Revenue
+          Top Revenue Product
 
         </div>
 
         <div class="insight-value">
 
-          ₱${totalSales.toLocaleString()}
+          ${sorted[0][0]}
+
+        </div>
+
+      </div>
+    `;
+
+    insights.innerHTML += `
+
+      <div class="insight-item">
+
+        <div class="insight-label">
+
+          Best Performing Category
+
+        </div>
+
+        <div class="insight-value">
+
+          ${sorted[0][1].category}
 
         </div>
 
@@ -403,143 +478,215 @@ async function loadReports(){
     `;
   }
 
-  // Sales trend
+  insights.innerHTML += `
 
-  const salesByDate = {};
+    <div class="insight-item">
+
+      <div class="insight-label">
+
+        Total Revenue Generated
+
+      </div>
+
+      <div class="insight-value">
+
+        ${peso(totals.totalSales)}
+
+      </div>
+
+    </div>
+  `;
+
+  insights.innerHTML += `
+
+    <div class="insight-item">
+
+      <div class="insight-label">
+
+        Average Transaction Value
+
+      </div>
+
+      <div class="insight-value">
+
+        ${peso(totals.averageSale)}
+
+      </div>
+
+    </div>
+  `;
+}
+
+/* =========================================
+   SALES TREND CHART
+========================================= */
+
+function renderSalesChart(filtered){
+
+  const trend =
+    getEl("trendRange")
+    ?.value || "Daily";
+
+  const grouped = {};
 
   filtered.forEach(transaction => {
 
     const date =
       new Date(
         transaction.created_at
-      ).toLocaleDateString();
+      );
 
-    if(!salesByDate[date]){
+    let label = "";
 
-      salesByDate[date] = 0;
+    if(trend === "Daily"){
+
+      label =
+        date.toLocaleDateString();
+
+    }else if(trend === "Weekly"){
+
+      const week =
+        Math.ceil(
+          date.getDate() / 7
+        );
+
+      label =
+        `Week ${week}`;
+
+    }else{
+
+      label =
+        date.toLocaleString(
+          "default",
+          {
+            month: "long"
+          }
+        );
     }
 
-    salesByDate[date] +=
-      Number(
-        transaction.total || 0
+    if(!grouped[label]){
+
+      grouped[label] = 0;
+    }
+
+    grouped[label] +=
+      safeNumber(
+        transaction.total
       );
   });
-
-  const salesLabels =
-    Object.keys(salesByDate);
-
-  const salesValues =
-    Object.values(salesByDate);
-
-  // Sales chart
 
   const salesCanvas =
     getEl("salesChart");
 
-  if(salesCanvas){
+  if(!salesCanvas) return;
 
-    if(salesChart){
+  if(salesChart){
 
-      salesChart.destroy();
-    }
+    salesChart.destroy();
+  }
 
-    const gradient =
-      salesCanvas
-        .getContext("2d")
-        .createLinearGradient(
-          0,
-          0,
-          0,
-          400
-        );
+  const ctx =
+    salesCanvas.getContext("2d");
 
-    gradient.addColorStop(
+  const gradient =
+    ctx.createLinearGradient(
       0,
-      "rgba(124,58,237,0.45)"
+      0,
+      0,
+      400
     );
 
-    gradient.addColorStop(
-      1,
-      "rgba(124,58,237,0)"
-    );
+  gradient.addColorStop(
+    0,
+    "rgba(124,58,237,0.45)"
+  );
 
-    salesChart =
-      new Chart(salesCanvas, {
+  gradient.addColorStop(
+    1,
+    "rgba(124,58,237,0)"
+  );
 
-        type: "line",
+  salesChart =
+    new Chart(ctx, {
 
-        data: {
+      type: "line",
 
-          labels:
-            salesLabels,
+      data: {
 
-          datasets: [{
+        labels:
+          Object.keys(grouped),
 
-            data:
-              salesValues,
+        datasets: [{
 
-            borderColor:
-              "#8b5cf6",
+          data:
+            Object.values(grouped),
 
-            backgroundColor:
-              gradient,
+          borderColor:
+            "#8b5cf6",
 
-            fill: true,
+          backgroundColor:
+            gradient,
 
-            tension: 0.45,
+          fill: true,
 
-            borderWidth: 3,
+          tension: 0.45,
 
-            pointRadius: 5,
+          borderWidth: 3,
 
-            pointHoverRadius: 7,
+          pointRadius: 4,
 
-            pointBackgroundColor:
-              "#8b5cf6"
-          }]
+          pointHoverRadius: 6,
+
+          pointBackgroundColor:
+            "#8b5cf6"
+        }]
+      },
+
+      options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+          legend: {
+
+            display: false
+          }
         },
 
-        options: {
+        scales: {
 
-          responsive: true,
+          x: {
 
-          maintainAspectRatio: false,
+            grid: {
 
-          plugins: {
-
-            legend: {
-
-              display: false
+              color:
+                "rgba(255,255,255,0.04)"
             }
           },
 
-          scales: {
+          y: {
 
-            x: {
+            beginAtZero: true,
 
-              grid: {
+            grid: {
 
-                color:
-                  "rgba(255,255,255,0.04)"
+              color:
+                "rgba(255,255,255,0.05)"
               }
-            },
-
-            y: {
-
-              beginAtZero: true,
-
-              grid: {
-
-                color:
-                  "rgba(255,255,255,0.05)"
-              }
-            }
           }
         }
-      });
-  }
+      }
+    });
+}
 
-  // Category chart
+/* =========================================
+   CATEGORY CHART
+========================================= */
+
+function renderCategoryChart(filtered){
 
   const categoryMap = {};
 
@@ -558,69 +705,130 @@ async function loadReports(){
     }
 
     categoryMap[category] +=
-      Number(
-        transaction.total || 0
+      safeNumber(
+        transaction.total
       );
   });
 
   const categoryCanvas =
     getEl("categoryChart");
 
-  if(categoryCanvas){
+  if(!categoryCanvas) return;
 
-    if(categoryChart){
+  if(categoryChart){
 
-      categoryChart.destroy();
-    }
+    categoryChart.destroy();
+  }
 
-    categoryChart =
-      new Chart(categoryCanvas, {
+  categoryChart =
+    new Chart(categoryCanvas, {
 
-        type: "doughnut",
+      type: "doughnut",
 
-        data: {
+      data: {
 
-          labels:
-            Object.keys(categoryMap),
+        labels:
+          Object.keys(categoryMap),
 
-          datasets: [{
+        datasets: [{
 
-            data:
-              Object.values(categoryMap),
+          data:
+            Object.values(categoryMap),
 
-            backgroundColor: [
+          backgroundColor: [
 
-              "#8b5cf6",
-              "#22c55e",
-              "#f59e0b",
-              "#3b82f6"
-            ],
+            "#8b5cf6",
+            "#22c55e",
+            "#f59e0b",
+            "#3b82f6",
+            "#ec4899",
+            "#14b8a6"
+          ],
 
-            borderWidth: 0
-          }]
-        },
+          borderWidth: 0
+        }]
+      },
 
-        options: {
+      options: {
 
-          responsive: true,
+        responsive: true,
 
-          maintainAspectRatio: false,
+        maintainAspectRatio: false,
 
-          cutout: "65%",
+        cutout: "68%",
 
-          plugins: {
+        plugins: {
 
-            legend: {
+          legend: {
 
-              position: "bottom"
-            }
+            position: "bottom"
           }
         }
-      });
-  }
+      }
+    });
 }
 
-// Init
+/* =========================================
+   LOAD REPORTS
+========================================= */
+
+async function loadReports(){
+
+  const reportTable =
+    getEl("reportTable");
+
+  if(reportTable){
+
+    reportTable.innerHTML = `
+
+      <tr class="loading-row">
+
+        <td colspan="5">
+
+          Loading report analytics...
+
+        </td>
+
+      </tr>
+    `;
+  }
+
+  await fetchTransactions();
+
+  const filtered =
+    filterTransactions();
+
+  const totals =
+    renderKPIs(filtered);
+
+  const productMap =
+    buildProductAnalytics(
+      filtered
+    );
+
+  renderReportTable(
+    productMap
+  );
+
+  renderInsights(
+    productMap,
+    totals
+  );
+
+  renderSalesChart(
+    filtered
+  );
+
+  renderCategoryChart(
+    filtered
+  );
+
+  lucide.createIcons();
+}
+
+/* =========================================
+   INIT
+========================================= */
 
 window.addEventListener(
   "load",
@@ -633,6 +841,40 @@ window.addEventListener(
 
     await loadReports();
 
+    // Backup RBAC
+
+    const backupLink =
+      getEl("backupLink");
+
+    if(backupLink){
+
+      backupLink.style.display =
+
+        window.appAuth.role ===
+        "admin_user"
+
+        ? ""
+
+        : "none";
+    }
+
+    // Realtime chart updates
+
+    const trendRange =
+      getEl("trendRange");
+
+    if(trendRange){
+
+      trendRange.addEventListener(
+        "change",
+        loadReports
+      );
+    }
+
     lucide.createIcons();
+
+    console.log(
+      "Reports initialized successfully"
+    );
   }
 );

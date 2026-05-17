@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Backup & Restore | BAO Storage
+  </title>
+
+  <!-- Fonts -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+
+  <link
+    rel="stylesheet"
+    href="backup.css"
+  />
+
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- ===================================================== -->
+    <!-- Sidebar -->
+    <!-- ===================================================== -->
+
+    <aside class="sidebar">
+
+      <div class="sidebar-inner">
+
+        <!-- Brand -->
+
+        <header class="sidebar-header">
+
+          <div class="sidebar-brand">
+
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="BAO Storage"
+              class="sidebar-logo"
+            />
+
+            <div class="brand-copy">
+
+              <h2>
+                BAO Storage
+              </h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        <!-- Navigation -->
+
+        <nav class="sidebar-nav">
+
+          <a href="dashboard.html">
+
+            <i data-lucide="layout-dashboard"></i>
+
+            <span>Dashboard</span>
+
+          </a>
+
+          <a href="products.html">
+
+            <i data-lucide="package"></i>
+
+            <span>Products</span>
+
+          </a>
+
+          <a href="categories.html">
+
+            <i data-lucide="folder-kanban"></i>
+
+            <span>Categories</span>
+
+          </a>
+
+          <a href="transactions.html">
+
+            <i data-lucide="receipt-text"></i>
+
+            <span>Transactions</span>
+
+          </a>
+
+          <a href="admin.html">
+
+            <i data-lucide="users"></i>
+
+            <span>User Management</span>
+
+          </a>
+
+          <a
+            href="backup.html"
+            class="active"
+          >
+
+            <i data-lucide="database-backup"></i>
+
+            <span>Backup & Restore</span>
+
+          </a>
+
+          <a href="reports.html">
+
+            <i data-lucide="file-bar-chart-2"></i>
+
+            <span>Reports</span>
+
+          </a>
+
+        </nav>
+
+        <!-- Footer -->
+
+        <footer class="sidebar-footer">
+
+          <button
+            class="logout-btn"
+            onclick="logout()"
+          >
+
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
+
+    </aside>
+
+    <!-- ===================================================== -->
+    <!-- Main -->
+    <!-- ===================================================== -->
+
+    <main class="main-content">
+
+      <!-- ===================================================== -->
+      <!-- Topbar -->
+      <!-- ===================================================== -->
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+
+          <button
+            class="mobile-menu-btn"
+            id="mobileMenuBtn"
+          >
+
+            <i data-lucide="menu"></i>
+
+          </button>
+
+          <div>
+
+            <div class="page-badge">
+
+              <i data-lucide="shield-check"></i>
+
+              <span>
+                System Protection
+              </span>
+
+            </div>
+
+            <h1>
+              Backup & Restore
+            </h1>
+
+            <p>
+              Manage backup snapshots, recovery points,
+              automated backups, and system restore operations.
+            </p>
+
+          </div>
+
+        </div>
+
+        <!-- Actions -->
+
+        <div class="topbar-actions">
+
+          <!-- Theme -->
+
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            aria-label="Toggle Theme"
+          >
+
+            <i data-lucide="moon"></i>
+
+          </button>
+
+          <!-- Refresh -->
+
+          <button
+            class="secondary-btn"
+            id="refreshBackupBtn"
+            onclick="refreshBackups()"
+          >
+
+            <i data-lucide="refresh-cw"></i>
+
+            <span>
+              Refresh
+            </span>
+
+          </button>
+
+          <!-- Create -->
+
+          <button
+            class="primary-btn"
+            id="createBackupBtn"
+            onclick="createBackup()"
+          >
+
+            <span class="btn-content">
+
+              <i data-lucide="plus"></i>
+
+              <span>
+                Create Backup
+              </span>
+
+            </span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+      <!-- ===================================================== -->
+      <!-- Stats -->
+      <!-- ===================================================== -->
+
+      <section class="stats-grid">
+
+        <!-- Total -->
+
+        <article class="stat-card">
+
+          <div class="stat-icon blue">
+
+            <i data-lucide="database"></i>
+
+          </div>
+
+          <div class="stat-content">
+
+            <p>
+              Total Backups
+            </p>
+
+            <h3 id="totalBackups">
+
+              0
+
+            </h3>
+
+            <span class="stats-meta">
+
+              System Snapshots
+
+            </span>
+
+          </div>
+
+        </article>
+
+        <!-- Latest -->
+
+        <article class="stat-card">
+
+          <div class="stat-icon green">
+
+            <i data-lucide="clock-3"></i>
+
+          </div>
+
+          <div class="stat-content">
+
+            <p>
+              Latest Backup
+            </p>
+
+            <h3 id="latestBackup">
+
+              No Data
+
+            </h3>
+
+            <span class="stats-meta">
+
+              Last Recovery Point
+
+            </span>
+
+          </div>
+
+        </article>
+
+        <!-- Auto Backup -->
+
+        <article class="stat-card">
+
+          <div class="stat-icon orange">
+
+            <i data-lucide="shield-check"></i>
+
+          </div>
+
+          <div class="stat-content">
+
+            <p>
+              Auto Backup
+            </p>
+
+            <h3>
+
+              Daily
+
+            </h3>
+
+            <span class="stats-meta">
+
+              Enabled
+
+            </span>
+
+          </div>
+
+        </article>
+
+        <!-- Storage -->
+
+        <article class="stat-card">
+
+          <div class="stat-icon purple">
+
+            <i data-lucide="hard-drive-download"></i>
+
+          </div>
+
+          <div class="stat-content">
+
+            <p>
+              Storage Usage
+            </p>
+
+            <h3 id="storageUsed">
+
+              0 MB
+
+            </h3>
+
+            <span class="stats-meta">
+
+              Backup Storage
+
+            </span>
+
+          </div>
+
+        </article>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- Overview -->
+      <!-- ===================================================== -->
+
+      <section class="overview-grid">
+
+        <!-- Coverage -->
+
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h2>
+                Backup Coverage
+              </h2>
+
+              <p>
+                Protected inventory and system resources
+              </p>
+
+            </div>
+
+            <div class="status-badge success">
+
+              <span></span>
+
+              Protected
+
+            </div>
+
+          </div>
+
+          <div class="backup-status-grid">
+
+            <div class="backup-status-item">
+
+              <span>User Profiles</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+            <div class="backup-status-item">
+
+              <span>Products</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+            <div class="backup-status-item">
+
+              <span>Categories</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+            <div class="backup-status-item">
+
+              <span>Transactions</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+            <div class="backup-status-item">
+
+              <span>Notifications</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+            <div class="backup-status-item">
+
+              <span>Audit Logs</span>
+
+              <strong>Protected</strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Recovery -->
+
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h2>
+                Recovery Configuration
+              </h2>
+
+              <p>
+                Backup retention and restore behavior
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="recovery-info-list">
+
+            <div class="recovery-item">
+
+              <span>
+                Backup Format
+              </span>
+
+              <strong>
+                JSON Snapshot
+              </strong>
+
+            </div>
+
+            <div class="recovery-item">
+
+              <span>
+                Auto Backup
+              </span>
+
+              <strong>
+                Daily Enabled
+              </strong>
+
+            </div>
+
+            <div class="recovery-item">
+
+              <span>
+                Restore Mode
+              </span>
+
+              <strong>
+                Full System Restore
+              </strong>
+
+            </div>
+
+            <div class="recovery-item">
+
+              <span>
+                Rotation Policy
+              </span>
+
+              <strong>
+                Latest 3 Versions
+              </strong>
+
+            </div>
+
+            <div class="recovery-item">
+
+              <span>
+                Access Level
+              </span>
+
+              <strong>
+                Admin Only
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- Backup History -->
+      <!-- ===================================================== -->
+
+      <section class="dashboard-card table-card">
+
+        <!-- Header -->
+
+        <div class="card-header table-header">
+
+          <div>
+
+            <h2>
+              Backup History
+            </h2>
+
+            <p>
+              Download, restore, manage,
+              and monitor backup snapshots.
+            </p>
+
+          </div>
+
+          <div class="table-actions">
+
+            <button
+              class="secondary-btn"
+              onclick="refreshBackups()"
+            >
+
+              <i data-lucide="rotate-cw"></i>
+
+              <span>
+                Reload
+              </span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Table -->
+
+        <div class="table-wrapper">
+
+          <table class="backup-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Version</th>
+
+                <th>Created At</th>
+
+                <th>Size</th>
+
+                <th>Status</th>
+
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="backupTable">
+
+              <tr>
+
+                <td
+                  colspan="5"
+                  class="table-loading"
+                >
+
+                  <div class="loading-wrapper">
+
+                    <div class="spinner"></div>
+
+                    <div>
+
+                      <h4>
+                        Loading backups...
+                      </h4>
+
+                      <p>
+                        Synchronizing backup history from Supabase.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <!-- Empty -->
+
+        <div
+          id="emptyState"
+          class="empty-state hidden"
+        >
+
+          <div class="empty-icon">
+
+            <i data-lucide="database-zap"></i>
+
+          </div>
+
+          <h3>
+            No Backups Found
+          </h3>
+
+          <p>
+            No backup snapshots are currently available.
+            Create your first backup to protect inventory data.
+          </p>
+
+          <button
+            class="primary-btn"
+            onclick="createBackup()"
+          >
+
+            <i data-lucide="plus"></i>
+
+            <span>
+              Create First Backup
+            </span>
+
+          </button>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- Restore Modal -->
+  <!-- ===================================================== -->
+
+  <div
+    class="modal-overlay hidden"
+    id="restoreModal"
+  >
+
+    <div class="modal">
+
+      <!-- Header -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <h2>
+            Restore Backup
+          </h2>
+
+          <p>
+            Restore a previous snapshot and replace current system data.
+          </p>
+
+        </div>
+
+        <button
+          class="modal-close-btn"
+          onclick="closeRestoreModal()"
+        >
+
+          <i data-lucide="x"></i>
+
+        </button>
+
+      </div>
+
+      <!-- Body -->
+
+      <div class="modal-body">
+
+        <div class="warning-box">
+
+          <div class="warning-icon">
+
+            <i data-lucide="triangle-alert"></i>
+
+          </div>
+
+          <div>
+
+            <h4>
+              Critical Operation
+            </h4>
+
+            <p>
+              Restoring a backup will overwrite products,
+              categories, transactions, notifications,
+              and inventory system records.
+            </p>
+
+          </div>
+
+        </div>
+
+        <!-- Restore Details -->
+
+        <div
+          id="restoreDetails"
+          class="restore-details"
+        ></div>
+
+      </div>
+
+      <!-- Footer -->
+
+      <div class="modal-footer">
+
+        <button
+          class="secondary-btn"
+          onclick="closeRestoreModal()"
+        >
+
+          Cancel
+
+        </button>
+
+        <button
+          class="danger-btn"
+          id="confirmRestoreBtn"
+        >
+
+          <span class="btn-content">
+
+            <i data-lucide="rotate-ccw"></i>
+
+            <span>
+              Restore Backup
+            </span>
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- Delete Modal -->
+  <!-- ===================================================== -->
+
+  <div
+    class="modal-overlay hidden"
+    id="deleteModal"
+  >
+
+    <div class="modal small-modal">
+
+      <!-- Header -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <h2>
+            Delete Backup
+          </h2>
+
+          <p>
+            Permanently remove selected backup snapshot.
+          </p>
+
+        </div>
+
+        <button
+          class="modal-close-btn"
+          onclick="closeDeleteModal()"
+        >
+
+          <i data-lucide="x"></i>
+
+        </button>
+
+      </div>
+
+      <!-- Body -->
+
+      <div class="modal-body">
+
+        <div class="warning-box delete-warning">
+
+          <div class="warning-icon">
+
+            <i data-lucide="trash-2"></i>
+
+          </div>
+
+          <div>
+
+            <h4>
+              Permanent Deletion
+            </h4>
+
+            <p>
+              This backup snapshot will be permanently deleted
+              and cannot be recovered afterward.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+
+      <div class="modal-footer">
+
+        <button
+          class="secondary-btn"
+          onclick="closeDeleteModal()"
+        >
+
+          Cancel
+
+        </button>
+
+        <button
+          class="danger-btn"
+          id="confirmDeleteBtn"
+        >
+
+          <span class="btn-content">
+
+            <i data-lucide="trash"></i>
+
+            <span>
+              Delete Backup
+            </span>
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- Global Loader -->
+  <!-- ===================================================== -->
+
+  <div
+    class="global-loader hidden"
+    id="globalLoader"
+  >
+
+    <div class="loader-card">
+
+      <div class="spinner large"></div>
+
+      <h3 id="loaderTitle">
+
+        Processing...
+
+      </h3>
+
+      <p id="loaderMessage">
+
+        Please wait while the operation completes.
+
+      </p>
+
+    </div>
+
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- Toast -->
+  <!-- ===================================================== -->
+
+  <div
+    class="toast-container"
+    id="toastContainer"
+  ></div>
+
+  <!-- ===================================================== -->
+  <!-- Scripts -->
+  <!-- ===================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="app-auth.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script src="backup.js"></script>
+
+  <!-- Init -->
+
+  <script>
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+
+        lucide.createIcons();
+      }
+    );
+
+  </script>
+
+</body>
+
+</html>

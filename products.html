@@ -1,235 +1,823 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Products | BAO Storage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="products.css">
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Products | BAO Storage
+  </title>
+
+  <!-- Fonts -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- CSS -->
+
+  <link
+    rel="stylesheet"
+    href="products.css"
+  />
+
 </head>
+
 <body>
 
-<div class="layout">
+  <div class="layout">
 
-  <aside class="sidebar">
-    <header class="sidebar-header">
-      <div class="sidebar-brand">
-        <img src="LSPULOGO3-removebg-preview.png" alt="LSPU Logo" class="sidebar-logo">
-        <div>
-          <h2>BAO Storage</h2>
-          <p class="sub">Inventory Management</p>
+    <!-- ===================================== -->
+    <!-- Sidebar -->
+    <!-- ===================================== -->
+
+    <aside class="sidebar">
+
+      <div class="sidebar-inner">
+
+        <!-- Brand -->
+
+        <header class="sidebar-header">
+
+          <div class="sidebar-brand">
+
+            <img
+              src="LSPULOGO3-removebg-preview.png"
+              alt="LSPU Logo"
+              class="sidebar-logo"
+            />
+
+            <div class="brand-copy">
+
+              <h2>BAO Storage</h2>
+
+              <p class="sub">
+                Inventory Management
+              </p>
+
+            </div>
+
+          </div>
+
+        </header>
+
+        <!-- Navigation -->
+
+        <nav class="sidebar-nav">
+
+          <a href="dashboard.html">
+
+            <i data-lucide="layout-dashboard"></i>
+
+            <span>Dashboard</span>
+
+          </a>
+
+          <a
+            href="products.html"
+            class="active"
+          >
+
+            <i data-lucide="package"></i>
+
+            <span>Products</span>
+
+          </a>
+
+          <a href="categories.html">
+
+            <i data-lucide="folder"></i>
+
+            <span>Categories</span>
+
+          </a>
+
+          <a href="transactions.html">
+
+            <i data-lucide="receipt"></i>
+
+            <span>Transactions</span>
+
+          </a>
+
+          <a href="admin.html">
+
+            <i data-lucide="shield"></i>
+
+            <span>User Management</span>
+
+          </a>
+
+          <a
+            href="backup.html"
+            id="backupLink"
+          >
+
+            <i data-lucide="database-backup"></i>
+
+            <span>Backup & Restore</span>
+
+          </a>
+
+          <a href="reports.html">
+
+            <i data-lucide="file-bar-chart"></i>
+
+            <span>Reports</span>
+
+          </a>
+
+        </nav>
+
+        <!-- Footer -->
+
+        <footer class="sidebar-footer">
+
+          <button
+            class="logout"
+            onclick="logout()"
+          >
+
+            <i data-lucide="log-out"></i>
+
+            <span>Logout</span>
+
+          </button>
+
+        </footer>
+
+      </div>
+
+    </aside>
+
+    <!-- ===================================== -->
+    <!-- Main -->
+    <!-- ===================================== -->
+
+    <main class="main">
+
+      <!-- Theme -->
+
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle Theme"
+      >
+
+        <span id="themeIcon">
+
+          <i data-lucide="moon"></i>
+
+        </span>
+
+      </button>
+
+      <!-- ===================================== -->
+      <!-- Topbar -->
+      <!-- ===================================== -->
+
+      <header class="topbar">
+
+        <div class="topbar-left">
+
+          <div class="page-badge">
+
+            <i data-lucide="boxes"></i>
+
+            <span>Inventory Control</span>
+
+          </div>
+
+          <h1>
+            Products
+          </h1>
+
+          <p>
+            Manage inventory items, stock levels,
+            product media, pricing, and sales operations.
+          </p>
+
         </div>
-      </div>
-    </header>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a href="products.html" class="active"><i data-lucide="package"></i><span>Products</span></a>
-      <a href="categories.html"><i data-lucide="folder"></i><span>Categories</span></a>
-      <a href="transactions.html"><i data-lucide="receipt"></i><span>Transactions</span></a>
-      <a href="admin.html"><i data-lucide="shield"></i><span>User Management</span></a>
-      <a href="reports.html"><i data-lucide="file-bar-chart"></i><span>Reports</span></a>
-    </nav>
+      </header>
 
-    <footer class="sidebar-footer">
-      <button class="logout" onclick="logout()"><i data-lucide="log-out"></i><span>Logout</span></button>
-    </footer>
-  </aside>
+      <!-- ===================================== -->
+      <!-- Main Content -->
+      <!-- ===================================== -->
 
-  <main class="main">
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">
-      <span id="themeIcon"><i data-lucide="moon"></i></span>
-    </button>
+      <div class="main-content">
 
-    <header class="topbar">
-      <div class="topbar-left">
-        <h1>Products</h1>
-        <p>Manage and monitor your inventory items</p>
-      </div>
-    </header>
+        <!-- ===================================== -->
+        <!-- Controls -->
+        <!-- ===================================== -->
 
-    <!-- CONTROLS -->
-    <section class="controls">
+        <section class="controls-section">
 
-      <div class="search-box">
-        <input type="text" id="search" placeholder="Search products..." oninput="renderTable()">
-      </div>
+          <!-- Search -->
 
-      <div class="right-controls">
-        <select id="filter" onchange="renderTable()">
-          <option value="All">All Categories</option>
-          <option value="Uniforms">Uniforms</option>
-          <option value="Books">Books</option>
-          <option value="PE Wear">PE Wear</option>
-          <option value="ID Laces">ID Laces</option>
-        </select>
+          <div class="controls-left">
 
-        <button class="add-btn" onclick="openAdd()">+ Add Product</button>
-      </div>
+            <div class="search-box">
 
-    </section>
+              <div class="search-icon">
 
-    <!-- TABLE -->
-    <section class="table-container">
-      <table class="product-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Product Name</th>
-            <th>Category</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+                <i data-lucide="search"></i>
 
-        <tbody id="tableBody">
-          <!-- JS RENDER -->
-          <!-- SAMPLE STRUCTURE -->
-          <!--
-          <tr>
-            <td>P123</td>
-            <td>Sample Product</td>
-            <td>Books</td>
-            <td>10</td>
-            <td>₱100</td>
-            <td>In Stock</td>
-            <td>
-              <div class="actions">
-                <button class="edit-btn">✏️ Edit</button>
-                <button class="sell-btn">🛒 Sell</button>
-                <button class="delete-btn">🗑 Delete</button>
               </div>
-            </td>
-          </tr>
-          -->
-        </tbody>
-      </table>
-    </section>
 
-  </main>
-</div>
+              <input
+                type="text"
+                id="search"
+                placeholder="Search products..."
+                oninput="renderTable()"
+              />
 
-<!-- ================= ADD / EDIT PRODUCT MODAL ================= -->
-<div id="modal" class="modal">
-  <div class="modal-content">
+            </div>
 
-    <h3 id="modalTitle">Add Product</h3>
+          </div>
 
-    <div class="form">
+          <!-- Right -->
 
-      <div class="form-group">
-        <label>Product Name</label>
-        <input type="text" id="name" placeholder="Enter product name">
+          <div class="controls-right">
+
+            <!-- Filter -->
+
+            <div class="filter-wrapper">
+
+              <i
+                data-lucide="filter"
+                class="filter-icon"
+              ></i>
+
+              <select
+                id="filter"
+                onchange="renderTable()"
+              >
+
+                <option value="All">
+
+                  All Categories
+
+                </option>
+
+              </select>
+
+            </div>
+
+            <!-- Add -->
+
+            <button
+              class="add-btn"
+              onclick="openAdd()"
+            >
+
+              <i data-lucide="plus"></i>
+
+              <span>Add Product</span>
+
+            </button>
+
+          </div>
+
+        </section>
+
+        <!-- ===================================== -->
+        <!-- Product Table -->
+        <!-- ===================================== -->
+
+        <section class="table-panel">
+
+          <!-- Header -->
+
+          <div class="table-header">
+
+            <div>
+
+              <h2>
+                Product Inventory
+              </h2>
+
+              <p>
+                Monitor inventory products, stock,
+                pricing, and operational actions.
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- Table -->
+
+          <div class="table-wrapper">
+
+            <table class="product-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>Media</th>
+
+                  <th>Product</th>
+
+                  <th>Category</th>
+
+                  <th>Stock</th>
+
+                  <th>Price</th>
+
+                  <th>Status</th>
+
+                  <th class="actions-column">
+
+                    Actions
+
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody id="tableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
       </div>
 
-      <div class="form-group">
-        <label>Category</label>
-        <select id="category">
-          <option value="Uniforms">Uniforms</option>
-          <option value="Books">Books</option>
-          <option value="PE Wear">PE Wear</option>
-          <option value="ID Laces">ID Laces</option>
-        </select>
-      </div>
+    </main>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Quantity</label>
-          <input type="number" id="qty" min="0" placeholder="Enter quantity">
+  </div>
+
+  <!-- ===================================== -->
+  <!-- Product Modal -->
+  <!-- ===================================== -->
+
+  <div
+    id="modal"
+    class="modal"
+  >
+
+    <div class="modal-overlay"></div>
+
+    <div class="modal-content product-modal">
+
+      <!-- Header -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <div class="modal-badge">
+
+            <i data-lucide="package-plus"></i>
+
+            <span>Inventory Management</span>
+
+          </div>
+
+          <h3 id="modalTitle">
+
+            Add Product
+
+          </h3>
+
+          <p>
+            Configure product inventory,
+            pricing, category, and media assets.
+          </p>
+
         </div>
 
-        <div class="form-group">
-          <label>Price (₱)</label>
-          <input type="number" id="price" min="0" placeholder="Enter price">
+        <button
+          class="close-icon"
+          onclick="closeModal()"
+        >
+
+          <i data-lucide="x"></i>
+
+        </button>
+
+      </div>
+
+      <!-- Form Grid -->
+
+      <div class="form-grid">
+
+        <!-- Media -->
+
+        <div class="media-column">
+
+          <label class="section-label">
+
+            Product Media
+
+          </label>
+
+          <!-- Upload -->
+
+          <div class="upload-zone">
+
+            <input
+              type="file"
+              id="productImage"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onchange="previewImage(event)"
+            />
+
+            <!-- Preview -->
+
+            <div class="image-preview">
+
+              <img
+                id="previewImg"
+                src=""
+                alt="Preview"
+              />
+
+              <!-- Placeholder -->
+
+              <div
+                id="previewPlaceholder"
+                class="preview-placeholder"
+              >
+
+                <div class="upload-icon">
+
+                  <i data-lucide="image-plus"></i>
+
+                </div>
+
+                <span>
+                  Upload Product Image
+                </span>
+
+                <small>
+                  PNG, JPG, WEBP, GIF — Max 5MB
+                </small>
+
+              </div>
+
+            </div>
+
+            <!-- Upload Status -->
+
+            <div
+              id="uploadStatus"
+              class="upload-status"
+              style="display:none;"
+            >
+
+              <small id="uploadStatusText"></small>
+
+            </div>
+
+          </div>
+
         </div>
+
+        <!-- Details -->
+
+        <div class="details-column">
+
+          <!-- Product Name -->
+
+          <div class="form-group">
+
+            <label>
+              Product Name *
+            </label>
+
+            <input
+              type="text"
+              id="name"
+              placeholder="Enter product name"
+              required
+            />
+
+          </div>
+
+          <!-- Category -->
+
+          <div class="form-group">
+
+            <label>
+              Category *
+            </label>
+
+            <div class="select-wrapper">
+
+              <select
+                id="category"
+                required
+              ></select>
+
+              <i
+                data-lucide="chevron-down"
+                class="select-icon"
+              ></i>
+
+            </div>
+
+          </div>
+
+          <!-- Row -->
+
+          <div class="form-row">
+
+            <!-- Quantity -->
+
+            <div class="form-group">
+
+              <label>
+                Quantity *
+              </label>
+
+              <input
+                type="number"
+                id="qty"
+                min="0"
+                placeholder="0"
+                required
+              />
+
+            </div>
+
+            <!-- Price -->
+
+            <div class="form-group">
+
+              <label>
+                Price (₱) *
+              </label>
+
+              <input
+                type="number"
+                id="price"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-cancel"
+          onclick="closeModal()"
+        >
+
+          Cancel
+
+        </button>
+
+        <button
+          class="btn-save"
+          onclick="saveProduct()"
+          id="saveProductBtn"
+        >
+
+          <i data-lucide="save"></i>
+
+          <span>Save Product</span>
+
+        </button>
+
       </div>
 
     </div>
 
-    <div class="modal-actions">
-      <button onclick="closeModal()">Cancel</button>
-      <button class="primary" onclick="saveProduct()">Save</button>
-    </div>
-
   </div>
-</div>
 
-<!-- ================= SELL MODAL ================= -->
-<div id="sellModal" class="modal">
-  <div class="modal-content">
+  <!-- ===================================== -->
+  <!-- Sell Modal -->
+  <!-- ===================================== -->
 
-    <h3>Sell Product</h3>
+  <div
+    id="sellModal"
+    class="modal"
+  >
 
-    <div class="form">
+    <div class="modal-overlay"></div>
 
-      <div class="form-group">
-        <label>Buyer Name</label>
-        <input type="text" id="buyer" placeholder="Enter buyer name">
+    <div class="modal-content">
+
+      <!-- Header -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <div class="modal-badge">
+
+            <i data-lucide="shopping-cart"></i>
+
+            <span>Sales Transaction</span>
+
+          </div>
+
+          <h3>
+            Sell Product
+          </h3>
+
+          <p>
+            Record inventory sales
+            and generate transaction receipt.
+          </p>
+
+        </div>
+
+        <button
+          class="close-icon"
+          onclick="closeSell()"
+        >
+
+          <i data-lucide="x"></i>
+
+        </button>
+
       </div>
 
-      <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" id="sellQty" min="1" placeholder="Enter quantity">
+      <!-- Form -->
+
+      <div class="form">
+
+        <!-- Buyer -->
+
+        <div class="form-group">
+
+          <label>
+            Buyer Name
+          </label>
+
+          <input
+            type="text"
+            id="buyer"
+            placeholder="Enter buyer name"
+          />
+
+        </div>
+
+        <!-- Quantity -->
+
+        <div class="form-group">
+
+          <label>
+            Quantity
+          </label>
+
+          <input
+            type="number"
+            id="sellQty"
+            min="1"
+            placeholder="Enter quantity"
+          />
+
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-cancel"
+          onclick="closeSell()"
+        >
+
+          Cancel
+
+        </button>
+
+        <button
+          class="btn-save"
+          onclick="confirmSell()"
+        >
+
+          <i data-lucide="check"></i>
+
+          <span>Confirm Sale</span>
+
+        </button>
+
       </div>
 
     </div>
 
-    <div class="modal-actions">
-      <button onclick="closeSell()">Cancel</button>
-      <button class="primary" onclick="confirmSell()">Confirm Sale</button>
+  </div>
+
+  <!-- ===================================== -->
+  <!-- Receipt -->
+  <!-- ===================================== -->
+
+  <div
+    id="receiptModal"
+    class="modal"
+  >
+
+    <div
+      class="modal-content receipt-style"
+      id="receiptBox"
+    >
+
+      <div class="receipt-header">
+
+        <h3>
+          BAO STORAGE
+        </h3>
+
+        <p class="receipt-sub">
+          Inventory System Receipt
+        </p>
+
+      </div>
+
+      <div id="receiptContent"></div>
+
+      <!-- Actions -->
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-cancel"
+          onclick="closeReceipt()"
+        >
+
+          Close
+
+        </button>
+
+        <button
+          class="btn-save"
+          onclick="printReceipt()"
+        >
+
+          <i data-lucide="printer"></i>
+
+          <span>Print Receipt</span>
+
+        </button>
+
+      </div>
+
     </div>
 
   </div>
-</div>
 
-<!-- ================= RECEIPT MODAL ================= -->
-<div id="receiptModal" class="modal">
-  <div class="modal-content receipt-style" id="receiptBox">
+  <!-- ===================================== -->
+  <!-- Toast -->
+  <!-- ===================================== -->
 
-    <h3>BAO STORAGE</h3>
-    <p class="receipt-sub">Inventory System Receipt</p>
+  <div id="toast"></div>
 
-    <div id="receiptContent"></div>
+  <!-- ===================================== -->
+  <!-- Scripts -->
+  <!-- ===================================== -->
 
-    <div class="modal-actions">
-      <button onclick="printReceipt()">Print</button>
-      <button onclick="closeReceipt()">Close</button>
-    </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  </div>
-</div>
+  <script src="app-auth.js"></script>
 
-<!-- TOAST -->
-<div id="toast"></div>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app-auth.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="products.js"></script>
-<script>
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    const isLight = savedTheme === "light";
-    if (isLight) document.body.classList.add("light-mode");
-    const icon = document.getElementById("themeIcon");
-    const toggle = document.getElementById("themeToggle");
-    function refreshThemeIcon(light) {
-      icon.innerHTML = light ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
-      lucide.createIcons();
-    }
-    toggle.addEventListener("click", function() {
-      document.body.classList.toggle("light-mode");
-      const light = document.body.classList.contains("light-mode");
-      localStorage.setItem("theme", light ? "light" : "dark");
-      refreshThemeIcon(light);
-    });
-    refreshThemeIcon(isLight);
-  })();
-</script>
+  <script src="products.js"></script>
+
+  <script>
+    lucide.createIcons();
+  </script>
 
 </body>
+
 </html>
