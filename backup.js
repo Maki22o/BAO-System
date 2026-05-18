@@ -2,17 +2,48 @@ const supabaseClient =
   window.appSupabase;
 
 /* =========================================================
+   ENTERPRISE BACKUP SYSTEM
+   Production-Grade ZIP Backup Architecture
+========================================================= */
+
+/* =========================================================
    GLOBAL STATE
 ========================================================= */
 
 let backups = [];
 
 let restoreTarget = null;
+
 let deleteTarget = null;
 
 let creatingBackup = false;
+
 let restoringBackup = false;
+
 let refreshingBackups = false;
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const BACKUP_VERSION =
+  "2.0.0";
+
+const MAX_BACKUPS =
+  3;
+
+const CHUNK_SIZE =
+  500;
+
+const BACKUP_TABLES = [
+
+  "profiles",
+  "products",
+  "categories",
+  "transactions",
+  "notifications",
+  "logs"
+];
 
 /* =========================================================
    HELPERS
@@ -23,11 +54,26 @@ function getEl(id){
   return document.getElementById(id);
 }
 
+function delay(ms){
+
+  return new Promise(resolve => {
+
+    setTimeout(resolve, ms);
+
+  });
+}
+
 function formatBytes(bytes){
 
-  if(!bytes) return "0 MB";
+  if(!bytes){
 
-  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    return "0 MB";
+  }
+
+  const mb =
+    bytes / 1024 / 1024;
+
+  return `${mb.toFixed(2)} MB`;
 }
 
 function generateBackupName(){
@@ -35,78 +81,109 @@ function generateBackupName(){
   const now =
     new Date();
 
-  return `backup-${now.toISOString()}.json`;
+  const formatted =
+
+    now.getFullYear() + "-" +
+
+    String(
+      now.getMonth() + 1
+    ).padStart(2,"0") + "-" +
+
+    String(
+      now.getDate()
+    ).padStart(2,"0") + "_" +
+
+    String(
+      now.getHours()
+    ).padStart(2,"0") + "-" +
+
+    String(
+      now.getMinutes()
+    ).padStart(2,"0") + "-" +
+
+    String(
+      now.getSeconds()
+    ).padStart(2,"0");
+
+  return `bao-backup-${formatted}.zip`;
 }
 
 /* =========================================================
-   AUTO DAILY BACKUP
+   LOADER
 ========================================================= */
 
-function getTodayBackupKey(){
+function showLoader(
 
-  return new Date()
-    .toISOString()
-    .split("T")[0];
-}
+  title = "Processing...",
+  message = "Please wait..."
 
-function shouldRunAutoBackup(){
+){
 
-  const lastBackup =
-    localStorage.getItem(
-      "lastAutoBackup"
-    );
+  const loader =
+    getEl("globalLoader");
 
-  return lastBackup !==
-    getTodayBackupKey();
-}
+  if(!loader) return;
 
-function markAutoBackupComplete(){
+  getEl("loaderTitle")
+    .innerText = title;
 
-  localStorage.setItem(
+  getEl("loaderMessage")
+    .innerText = message;
 
-    "lastAutoBackup",
+  updateLoaderProgress(0);
 
-    getTodayBackupKey()
+  loader.classList.remove(
+    "hidden"
   );
 }
 
-async function runAutoBackup(){
+function hideLoader(){
 
-  try{
+  const loader =
+    getEl("globalLoader");
 
-    if(!shouldRunAutoBackup()){
+  if(!loader) return;
 
-      console.log(
-        "Daily backup already completed"
-      );
+  loader.classList.add(
+    "hidden"
+  );
+}
 
-      return;
+function updateLoaderProgress(
+
+  percent = 0,
+  message = ""
+
+){
+
+  const fill =
+    getEl("loaderProgressFill");
+
+  const text =
+    getEl("loaderProgressText");
+
+  if(fill){
+
+    fill.style.width =
+      `${percent}%`;
+  }
+
+  if(text){
+
+    text.innerText =
+      `${percent}%`;
+  }
+
+  if(message){
+
+    const loaderMessage =
+      getEl("loaderMessage");
+
+    if(loaderMessage){
+
+      loaderMessage.innerText =
+        message;
     }
-
-    console.log(
-      "Running automatic daily backup..."
-    );
-
-    await createBackup({
-
-      silent: true,
-      automatic: true
-    });
-
-    markAutoBackupComplete();
-
-    console.log(
-      "Automatic backup completed"
-    );
-
-  }catch(error){
-
-    console.error(
-
-      "AUTO BACKUP ERROR:",
-
-      error
-    );
   }
 }
 
@@ -115,8 +192,10 @@ async function runAutoBackup(){
 ========================================================= */
 
 function showToast(
+
   message,
   type = "success"
+
 ){
 
   const container =
@@ -154,44 +233,7 @@ function showToast(
 
     }, 250);
 
-  }, 2600);
-}
-
-/* =========================================================
-   GLOBAL LOADER
-========================================================= */
-
-function showLoader(
-  title = "Processing...",
-  message = "Please wait..."
-){
-
-  const loader =
-    getEl("globalLoader");
-
-  if(!loader) return;
-
-  getEl("loaderTitle").innerText =
-    title;
-
-  getEl("loaderMessage").innerText =
-    message;
-
-  loader.classList.remove(
-    "hidden"
-  );
-}
-
-function hideLoader(){
-
-  const loader =
-    getEl("globalLoader");
-
-  if(!loader) return;
-
-  loader.classList.add(
-    "hidden"
-  );
+  }, 3000);
 }
 
 /* =========================================================
@@ -231,24 +273,29 @@ async function fetchBackups({
       renderLoading();
     }
 
-    const { data, error } =
-      await supabaseClient
+    const {
 
-        .from("backup_versions")
+      data,
+      error
 
-        .select("*")
+    } = await supabaseClient
 
-        .order("created_at", {
+      .from("backup_versions")
 
-          ascending: false
-        });
+      .select("*")
+
+      .order("created_at", {
+
+        ascending:false
+      });
 
     if(error){
 
       throw error;
     }
 
-    backups = [...(data || [])];
+    backups =
+      data || [];
 
     renderBackups();
 
@@ -299,7 +346,9 @@ async function refreshBackups(){
         <i data-lucide="loader-circle"></i>
 
         <span>
+
           Refreshing...
+
         </span>
       `;
 
@@ -323,7 +372,9 @@ async function refreshBackups(){
         <i data-lucide="refresh-cw"></i>
 
         <span>
+
           Refresh
+
         </span>
       `;
 
@@ -360,7 +411,8 @@ async function createBackup({
       showLoader(
 
         "Creating Backup",
-        "Collecting and securing system data..."
+
+        "Collecting and compressing database records..."
       );
     }
 
@@ -368,196 +420,281 @@ async function createBackup({
 
       button.disabled = true;
 
-      button.innerHTML = `
-
-        <i data-lucide="loader-circle"></i>
-
-        <span>
-          Creating...
-        </span>
-      `;
-
-      lucide.createIcons();
-    }
-
-    const [
-
-      profiles,
-      products,
-      categories,
-      transactions,
-      notifications,
-      logs
-
-    ] = await Promise.all([
-
-      supabaseClient
-        .from("profiles")
-        .select("*"),
-
-      supabaseClient
-        .from("products")
-        .select("*"),
-
-      supabaseClient
-        .from("categories")
-        .select("*"),
-
-      supabaseClient
-        .from("transactions")
-        .select("*"),
-
-      supabaseClient
-        .from("notifications")
-        .select("*"),
-
-      supabaseClient
-        .from("logs")
-        .select("*")
-    ]);
-
-    const errors = [
-
-      profiles.error,
-      products.error,
-      categories.error,
-      transactions.error,
-      notifications.error,
-      logs.error
-
-    ].filter(Boolean);
-
-    if(errors.length){
-
-      console.error(errors);
-
-      throw new Error(
-        "Unable to fetch system data"
+      button.classList.add(
+        "btn-loading"
       );
     }
 
-    const payload = {
+    const zip =
+      new JSZip();
 
-      created_at:
+    /* =====================================================
+       MANIFEST
+    ===================================================== */
+
+    const manifest = {
+
+      backupVersion:
+        BACKUP_VERSION,
+
+      app:
+        "BAO Storage",
+
+      createdAt:
         new Date().toISOString(),
 
-      version:
-        `v-${Date.now()}`,
-
-      created_by:
+      createdBy:
         window.appAuth.user.id,
 
-      data: {
+      compression:
+        "DEFLATE",
 
-        profiles:
-          profiles.data || [],
-
-        products:
-          products.data || [],
-
-        categories:
-          categories.data || [],
-
-        transactions:
-          transactions.data || [],
-
-        notifications:
-          notifications.data || [],
-
-        logs:
-          logs.data || []
-      }
+      tables:
+        BACKUP_TABLES
     };
 
-    const json =
+    zip.file(
+
+      "manifest.json",
+
       JSON.stringify(
-        payload,
+        manifest,
         null,
         2
+      )
+    );
+
+    const tablesFolder =
+      zip.folder("tables");
+
+    /* =====================================================
+       EXPORT TABLES
+    ===================================================== */
+
+    for(
+
+      let i = 0;
+      i < BACKUP_TABLES.length;
+      i++
+
+    ){
+
+      const table =
+        BACKUP_TABLES[i];
+
+      const percent =
+
+        Math.floor(
+          (
+            i /
+            BACKUP_TABLES.length
+          ) * 60
+        );
+
+      updateLoaderProgress(
+
+        percent,
+
+        `Exporting ${table}...`
       );
 
-    const blob =
-      new Blob([json], {
+      const {
 
-        type:
-          "application/json"
+        data,
+        error
+
+      } = await supabaseClient
+
+        .from(table)
+
+        .select("*");
+
+      if(error){
+
+        throw error;
+      }
+
+      tablesFolder.file(
+
+        `${table}.json`,
+
+        JSON.stringify(
+          data || [],
+          null,
+          2
+        )
+      );
+
+      await delay(100);
+    }
+
+    /* =====================================================
+       METADATA
+    ===================================================== */
+
+    const metadataFolder =
+      zip.folder("metadata");
+
+    metadataFolder.file(
+
+      "system.json",
+
+      JSON.stringify({
+
+        generatedAt:
+          new Date().toISOString(),
+
+        backupVersion:
+          BACKUP_VERSION,
+
+        source:
+          "BAO Storage"
+
+      }, null, 2)
+    );
+
+    /* =====================================================
+       COMPRESS
+    ===================================================== */
+
+    updateLoaderProgress(
+
+      75,
+
+      "Compressing backup archive..."
+    );
+
+    const blob =
+      await zip.generateAsync({
+
+        type:"blob",
+
+        compression:"DEFLATE",
+
+        compressionOptions:{
+          level:9
+        }
       });
 
     const fileName =
       generateBackupName();
 
-    const { error:uploadError } =
-      await supabaseClient.storage
+    /* =====================================================
+       UPLOAD
+    ===================================================== */
 
-        .from("backups")
+    updateLoaderProgress(
 
-        .upload(
-          fileName,
-          blob,
-          {
-            upsert: false,
-            contentType:
-              "application/json"
-          }
-        );
+      90,
+
+      "Uploading backup archive..."
+    );
+
+    const {
+
+      error:uploadError
+
+    } = await supabaseClient
+
+      .storage
+
+      .from("backups")
+
+      .upload(
+
+        fileName,
+        blob,
+
+        {
+          upsert:false,
+          contentType:
+            "application/zip"
+        }
+      );
 
     if(uploadError){
-
-      console.error(
-        "UPLOAD ERROR:",
-        uploadError
-      );
 
       throw uploadError;
     }
 
-    const { error:metaError } =
-      await supabaseClient
+    /* =====================================================
+       SAVE METADATA
+    ===================================================== */
 
-        .from("backup_versions")
+    updateLoaderProgress(
 
-        .insert([{
+      95,
 
-          file_name:
-            fileName,
+      "Saving backup metadata..."
+    );
 
-          size_kb:
-            (
-              blob.size / 1024
-            ).toFixed(2),
+    const {
 
-          status:
-            automatic
+      error:metaError
 
-            ? "automatic"
+    } = await supabaseClient
 
-            : "manual"
-        }]);
+      .from("backup_versions")
+
+      .insert([{
+
+        file_name:
+          fileName,
+
+        backup_version:
+          BACKUP_VERSION,
+
+        format:
+          "zip",
+
+        size_kb:
+          (
+            blob.size / 1024
+          ).toFixed(2),
+
+        status:
+
+          automatic
+
+          ? "automatic"
+
+          : "manual"
+      }]);
 
     if(metaError){
-
-      console.error(
-        "METADATA ERROR:",
-        metaError
-      );
 
       throw metaError;
     }
 
+    /* =====================================================
+       ROTATE OLD BACKUPS
+    ===================================================== */
+
     await rotateBackups();
+
+    /* =====================================================
+       LOG
+    ===================================================== */
 
     await createLog(
 
       automatic
 
-      ? `Automatic backup created ${fileName}`
+      ? `Automatic ZIP backup created ${fileName}`
 
-      : `Created backup ${fileName}`
+      : `Created ZIP backup ${fileName}`
+    );
+
+    updateLoaderProgress(
+
+      100,
+
+      "Backup completed successfully"
     );
 
     await fetchBackups({
 
-      silent: true
+      silent:true
     });
 
     if(!automatic){
@@ -586,26 +723,20 @@ async function createBackup({
 
     creatingBackup = false;
 
-    if(!silent){
-
-      hideLoader();
-    }
-
     if(button){
 
       button.disabled = false;
 
-      button.innerHTML = `
-
-        <i data-lucide="plus"></i>
-
-        <span>
-          Create Backup
-        </span>
-      `;
-
-      lucide.createIcons();
+      button.classList.remove(
+        "btn-loading"
+      );
     }
+
+    setTimeout(() => {
+
+      hideLoader();
+
+    }, 600);
   }
 }
 
@@ -617,29 +748,39 @@ async function rotateBackups(){
 
   try{
 
-    const { data } =
-      await supabaseClient
+    const {
 
-        .from("backup_versions")
+      data
 
-        .select("*")
+    } = await supabaseClient
 
-        .order("created_at", {
+      .from("backup_versions")
 
-          ascending: false
-        });
+      .select("*")
 
-    if(!data || data.length <= 3){
+      .order("created_at", {
+
+        ascending:false
+      });
+
+    if(
+
+      !data ||
+      data.length <= MAX_BACKUPS
+
+    ){
 
       return;
     }
 
     const old =
-      data.slice(3);
+      data.slice(MAX_BACKUPS);
 
     for(const item of old){
 
-      await supabaseClient.storage
+      await supabaseClient
+
+        .storage
 
         .from("backups")
 
@@ -653,7 +794,10 @@ async function rotateBackups(){
 
         .delete()
 
-        .eq("id", item.id);
+        .eq(
+          "id",
+          item.id
+        );
     }
 
   }catch(error){
@@ -662,6 +806,509 @@ async function rotateBackups(){
       "ROTATION ERROR:",
       error
     );
+  }
+}
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+async function downloadBackup(fileName){
+
+  try{
+
+    showLoader(
+
+      "Downloading Backup",
+
+      "Preparing secure archive..."
+    );
+
+    updateLoaderProgress(
+      35
+    );
+
+    const {
+
+      data,
+      error
+
+    } = await supabaseClient
+
+      .storage
+
+      .from("backups")
+
+      .download(fileName);
+
+    if(error){
+
+      throw error;
+    }
+
+    updateLoaderProgress(
+      85
+    );
+
+    saveAs(
+      data,
+      fileName
+    );
+
+    updateLoaderProgress(
+      100
+    );
+
+    showToast(
+      "Backup downloaded"
+    );
+
+  }catch(error){
+
+    console.error(
+      "DOWNLOAD ERROR:",
+      error
+    );
+
+    showToast(
+
+      "Unable to download backup",
+
+      "error"
+    );
+
+  }finally{
+
+    setTimeout(() => {
+
+      hideLoader();
+
+    }, 400);
+  }
+}
+
+/* =========================================================
+   RESTORE MODAL
+========================================================= */
+
+function openRestoreModal(fileName){
+
+  restoreTarget =
+    fileName;
+
+  const modal =
+    getEl("restoreModal");
+
+  if(modal){
+
+    modal.classList.remove(
+      "hidden"
+    );
+  }
+
+  getEl("confirmRestoreBtn")
+    .onclick =
+      confirmRestore;
+}
+
+function closeRestoreModal(){
+
+  restoreTarget = null;
+
+  const modal =
+    getEl("restoreModal");
+
+  if(modal){
+
+    modal.classList.add(
+      "hidden"
+    );
+  }
+}
+
+/* =========================================================
+   RESTORE BACKUP
+========================================================= */
+
+async function confirmRestore(){
+
+  if(
+
+    !restoreTarget ||
+    restoringBackup
+
+  ){
+
+    return;
+  }
+
+  restoringBackup = true;
+
+  try{
+
+    showLoader(
+
+      "Restoring Backup",
+
+      "Downloading recovery archive..."
+    );
+
+    const {
+
+      data,
+      error
+
+    } = await supabaseClient
+
+      .storage
+
+      .from("backups")
+
+      .download(
+        restoreTarget
+      );
+
+    if(error){
+
+      throw error;
+    }
+
+    updateLoaderProgress(
+
+      15,
+
+      "Reading ZIP archive..."
+    );
+
+    const zip =
+      await JSZip.loadAsync(data);
+
+    const manifestFile =
+      zip.file("manifest.json");
+
+    if(!manifestFile){
+
+      throw new Error(
+        "Invalid backup manifest"
+      );
+    }
+
+    const manifest =
+      JSON.parse(
+
+        await manifestFile
+          .async("string")
+      );
+
+    if(
+
+      !manifest.tables ||
+      !Array.isArray(
+        manifest.tables
+      )
+
+    ){
+
+      throw new Error(
+        "Invalid backup structure"
+      );
+    }
+
+    updateLoaderProgress(
+
+      25,
+
+      "Validating backup data..."
+    );
+
+    /* =====================================================
+       RESTORE TABLES
+    ===================================================== */
+
+    for(
+
+      let i = 0;
+      i < manifest.tables.length;
+      i++
+
+    ){
+
+      const table =
+        manifest.tables[i];
+
+      const percent =
+
+        25 +
+
+        Math.floor(
+          (
+            i /
+            manifest.tables.length
+          ) * 60
+        );
+
+      updateLoaderProgress(
+
+        percent,
+
+        `Restoring ${table}...`
+      );
+
+      const tableFile =
+        zip.file(
+          `tables/${table}.json`
+        );
+
+      if(!tableFile){
+
+        console.warn(
+          `Missing ${table}`
+        );
+
+        continue;
+      }
+
+      const content =
+        await tableFile.async(
+          "string"
+        );
+
+      const rows =
+        JSON.parse(content);
+
+      /* ===================================================
+         DELETE EXISTING
+      =================================================== */
+
+      await supabaseClient
+
+        .from(table)
+
+        .delete()
+
+        .neq("id",0);
+
+      /* ===================================================
+         INSERT CHUNKS
+      =================================================== */
+
+      if(rows.length > 0){
+
+        for(
+
+          let x = 0;
+          x < rows.length;
+          x += CHUNK_SIZE
+
+        ){
+
+          const chunk =
+            rows.slice(
+              x,
+              x + CHUNK_SIZE
+            );
+
+          const {
+
+            error:insertError
+
+          } = await supabaseClient
+
+            .from(table)
+
+            .insert(chunk);
+
+          if(insertError){
+
+            throw insertError;
+          }
+
+          await delay(50);
+        }
+      }
+    }
+
+    updateLoaderProgress(
+
+      95,
+
+      "Finalizing restore..."
+    );
+
+    await createLog(
+
+      `Restored ZIP backup ${restoreTarget}`
+    );
+
+    updateLoaderProgress(
+
+      100,
+
+      "Restore completed successfully"
+    );
+
+    closeRestoreModal();
+
+    showToast(
+      "Backup restored successfully"
+    );
+
+  }catch(error){
+
+    console.error(
+      "RESTORE ERROR:",
+      error
+    );
+
+    showToast(
+
+      error.message ||
+      "Restore failed",
+
+      "error"
+    );
+
+  }finally{
+
+    restoringBackup = false;
+
+    setTimeout(() => {
+
+      hideLoader();
+
+    }, 700);
+  }
+}
+
+/* =========================================================
+   DELETE MODAL
+========================================================= */
+
+function openDeleteModal(
+
+  id,
+  fileName
+
+){
+
+  deleteTarget = {
+
+    id,
+    fileName
+  };
+
+  getEl("deleteModal")
+    .classList.remove(
+      "hidden"
+    );
+
+  getEl("confirmDeleteBtn")
+    .onclick =
+      confirmDeleteBackup;
+}
+
+function closeDeleteModal(){
+
+  deleteTarget = null;
+
+  getEl("deleteModal")
+    .classList.add(
+      "hidden"
+    );
+}
+
+/* =========================================================
+   DELETE BACKUP
+========================================================= */
+
+async function confirmDeleteBackup(){
+
+  if(!deleteTarget){
+
+    return;
+  }
+
+  try{
+
+    showLoader(
+
+      "Deleting Backup",
+
+      "Removing backup archive..."
+    );
+
+    const {
+
+      error:storageError
+
+    } = await supabaseClient
+
+      .storage
+
+      .from("backups")
+
+      .remove([
+        deleteTarget.fileName
+      ]);
+
+    if(storageError){
+
+      throw storageError;
+    }
+
+    const {
+
+      error:dbError
+
+    } = await supabaseClient
+
+      .from("backup_versions")
+
+      .delete()
+
+      .eq(
+        "id",
+        deleteTarget.id
+      );
+
+    if(dbError){
+
+      throw dbError;
+    }
+
+    await createLog(
+
+      `Deleted backup ${deleteTarget.fileName}`
+    );
+
+    await fetchBackups({
+
+      silent:true
+    });
+
+    closeDeleteModal();
+
+    showToast(
+      "Backup deleted"
+    );
+
+  }catch(error){
+
+    console.error(
+      "DELETE ERROR:",
+      error
+    );
+
+    showToast(
+
+      "Unable to delete backup",
+
+      "error"
+    );
+
+  }finally{
+
+    hideLoader();
   }
 }
 
@@ -680,7 +1327,7 @@ function renderLoading(){
 
     <tr>
 
-      <td colspan="5" class="table-loading">
+      <td colspan="6" class="table-loading">
 
         <div class="loading-wrapper">
 
@@ -689,11 +1336,15 @@ function renderLoading(){
           <div>
 
             <h4>
+
               Loading backups...
+
             </h4>
 
             <p>
-              Synchronizing backup history.
+
+              Synchronizing backup archive history.
+
             </p>
 
           </div>
@@ -707,7 +1358,7 @@ function renderLoading(){
 }
 
 /* =========================================================
-   RENDER EMPTY
+   EMPTY
 ========================================================= */
 
 function renderEmpty(){
@@ -763,10 +1414,6 @@ function renderBackups(){
 
   const rows = backups.map((backup,index) => {
 
-    const isAutomatic =
-      backup.status ===
-      "automatic";
-
     return `
 
       <tr>
@@ -793,23 +1440,29 @@ function renderBackups(){
 
         <td>
 
-          ${backup.size_kb} KB
+          <span class="archive-badge">
+
+            ZIP
+
+          </span>
 
         </td>
 
         <td>
 
-          <span class="status-badge success">
+          <span class="file-size">
 
-            <span></span>
+            ${backup.size_kb} KB
 
-            ${
-              isAutomatic
+          </span>
 
-              ? "automatic"
+        </td>
 
-              : "manual"
-            }
+        <td>
+
+          <span class="backup-status success">
+
+            READY
 
           </span>
 
@@ -866,24 +1519,29 @@ function renderBackups(){
 
 function updateBackupStats(){
 
-  getEl("totalBackups").innerText =
-    backups.length;
+  getEl("totalBackups")
+    .innerText =
+      backups.length;
 
-  getEl("latestBackup").innerText =
+  getEl("latestBackup")
+    .innerText =
 
-    backups.length > 0
+      backups.length > 0
 
-    ? new Date(
-        backups[0].created_at
-      ).toLocaleDateString()
+      ? new Date(
+          backups[0].created_at
+        ).toLocaleDateString()
 
-    : "No Data";
+      : "No Data";
 
   const totalBytes =
+
     backups.reduce(
+
       (sum, backup) =>
 
         sum +
+
         (
           Number(
             backup.size_kb
@@ -893,324 +1551,9 @@ function updateBackupStats(){
       0
     );
 
-  getEl("storageUsed").innerText =
-    formatBytes(totalBytes);
-}
-
-/* =========================================================
-   DOWNLOAD
-========================================================= */
-
-async function downloadBackup(fileName){
-
-  try{
-
-    showLoader(
-
-      "Downloading Backup",
-      "Preparing secure download..."
-    );
-
-    const { data, error } =
-      await supabaseClient.storage
-
-        .from("backups")
-
-        .download(fileName);
-
-    if(error){
-
-      throw error;
-    }
-
-    const url =
-      URL.createObjectURL(data);
-
-    const a =
-      document.createElement("a");
-
-    a.href = url;
-
-    a.download = fileName;
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    a.remove();
-
-    URL.revokeObjectURL(url);
-
-    showToast(
-      "Backup downloaded"
-    );
-
-  }catch(error){
-
-    console.error(
-      "DOWNLOAD ERROR:",
-      error
-    );
-
-    showToast(
-      "Unable to download backup",
-      "error"
-    );
-
-  }finally{
-
-    hideLoader();
-  }
-}
-
-/* =========================================================
-   RESTORE MODAL
-========================================================= */
-
-function openRestoreModal(fileName){
-
-  restoreTarget =
-    fileName;
-
-  const modal =
-    getEl("restoreModal");
-
-  if(modal){
-
-    modal.classList.remove(
-      "hidden"
-    );
-  }
-
-  getEl("confirmRestoreBtn")
-    .onclick =
-      confirmRestore;
-}
-
-function closeRestoreModal(){
-
-  restoreTarget = null;
-
-  const modal =
-    getEl("restoreModal");
-
-  if(modal){
-
-    modal.classList.add(
-      "hidden"
-    );
-  }
-}
-
-/* =========================================================
-   RESTORE
-========================================================= */
-
-async function confirmRestore(){
-
-  if(
-    !restoreTarget ||
-    restoringBackup
-  ){
-
-    return;
-  }
-
-  restoringBackup = true;
-
-  try{
-
-    showLoader(
-
-      "Restoring Backup",
-      "Recovering inventory and system data..."
-    );
-
-    const { data, error } =
-      await supabaseClient.storage
-
-        .from("backups")
-
-        .download(
-          restoreTarget
-        );
-
-    if(error){
-
-      throw error;
-    }
-
-    const text =
-      await data.text();
-
-    const backup =
-      JSON.parse(text);
-
-    if(
-      !backup ||
-      !backup.data
-    ){
-
-      throw new Error(
-        "Invalid backup file"
-      );
-    }
-
-    console.log(
-      "RESTORE PAYLOAD:",
-      backup
-    );
-
-    await createLog(
-      `Restored backup ${restoreTarget}`
-    );
-
-    showToast(
-      "Backup restored successfully"
-    );
-
-    closeRestoreModal();
-
-  }catch(error){
-
-    console.error(
-      "RESTORE ERROR:",
-      error
-    );
-
-    showToast(
-
-      error.message ||
-      "Restore failed",
-
-      "error"
-    );
-
-  }finally{
-
-    restoringBackup = false;
-
-    hideLoader();
-  }
-}
-
-/* =========================================================
-   DELETE MODAL
-========================================================= */
-
-function openDeleteModal(
-  id,
-  fileName
-){
-
-  deleteTarget = {
-
-    id,
-    fileName
-  };
-
-  getEl("deleteModal")
-    .classList.remove(
-      "hidden"
-    );
-
-  getEl("confirmDeleteBtn")
-    .onclick =
-      confirmDeleteBackup;
-}
-
-function closeDeleteModal(){
-
-  deleteTarget = null;
-
-  getEl("deleteModal")
-    .classList.add(
-      "hidden"
-    );
-}
-
-/* =========================================================
-   DELETE
-========================================================= */
-
-async function confirmDeleteBackup(){
-
-  if(!deleteTarget){
-
-    return;
-  }
-
-  try{
-
-    showLoader(
-
-      "Deleting Backup",
-      "Removing backup snapshot..."
-    );
-
-    const { error:storageError } =
-      await supabaseClient.storage
-
-        .from("backups")
-
-        .remove([
-          deleteTarget.fileName
-        ]);
-
-    if(storageError){
-
-      throw storageError;
-    }
-
-    const { error:dbError } =
-      await supabaseClient
-
-        .from("backup_versions")
-
-        .delete()
-
-        .eq(
-          "id",
-          deleteTarget.id
-        );
-
-    if(dbError){
-
-      throw dbError;
-    }
-
-    await createLog(
-
-      `Deleted backup ${deleteTarget.fileName}`
-    );
-
-    await fetchBackups({
-
-      silent: true
-    });
-
-    closeDeleteModal();
-
-    showToast(
-      "Backup deleted"
-    );
-
-  }catch(error){
-
-    console.error(
-      "DELETE ERROR:",
-      error
-    );
-
-    showToast(
-      "Unable to delete backup",
-      "error"
-    );
-
-  }finally{
-
-    hideLoader();
-  }
+  getEl("storageUsed")
+    .innerText =
+      formatBytes(totalBytes);
 }
 
 /* =========================================================
@@ -1250,7 +1593,7 @@ setInterval(() => {
 
   fetchBackups({
 
-    silent: true
+    silent:true
   });
 
 }, 15000);
@@ -1260,21 +1603,26 @@ setInterval(() => {
 ========================================================= */
 
 window.addEventListener(
+
   "load",
+
   async () => {
 
     try{
 
       const ok =
+
         await window
           .initProtectedPageAuth();
 
       if(!ok) return;
 
       if(
+
         !window.isAdminRole(
           window.appAuth.role
         )
+
       ){
 
         window.location.href =
@@ -1285,12 +1633,10 @@ window.addEventListener(
 
       await fetchBackups();
 
-      await runAutoBackup();
-
       lucide.createIcons();
 
       console.log(
-        "Backup system initialized"
+        "Enterprise backup system initialized"
       );
 
     }catch(error){
@@ -1301,7 +1647,9 @@ window.addEventListener(
       );
 
       showToast(
+
         "Backup system failed to initialize",
+
         "error"
       );
     }

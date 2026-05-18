@@ -14,7 +14,9 @@
     Backup & Restore | BAO Storage
   </title>
 
+  <!-- ===================================================== -->
   <!-- Fonts -->
+  <!-- ===================================================== -->
 
   <link
     rel="preconnect"
@@ -32,7 +34,9 @@
     rel="stylesheet"
   />
 
+  <!-- ===================================================== -->
   <!-- CSS -->
+  <!-- ===================================================== -->
 
   <link
     rel="stylesheet"
@@ -51,124 +55,120 @@
 
     <aside class="sidebar">
 
-      <div class="sidebar-inner">
+      <div class="sidebar-top">
 
         <!-- Brand -->
 
-        <header class="sidebar-header">
+        <div class="brand">
 
-          <div class="sidebar-brand">
+          <img
+            src="LSPULOGO3-removebg-preview.png"
+            alt="BAO Storage"
+            class="brand-logo"
+          >
 
-            <img
-              src="LSPULOGO3-removebg-preview.png"
-              alt="BAO Storage"
-              class="sidebar-logo"
-            />
+          <div class="brand-info">
 
-            <div class="brand-copy">
+            <h2>
+              BAO Storage
+            </h2>
 
-              <h2>
-                BAO Storage
-              </h2>
-
-              <p class="sub">
-                Inventory Management
-              </p>
-
-            </div>
+            <p>
+              Inventory Management
+            </p>
 
           </div>
 
-        </header>
+        </div>
 
-        <!-- Navigation -->
+      </div>
 
-        <nav class="sidebar-nav">
+      <!-- Navigation -->
 
-          <a href="dashboard.html">
+      <nav class="sidebar-nav">
 
-            <i data-lucide="layout-dashboard"></i>
+        <a href="dashboard.html">
 
-            <span>Dashboard</span>
+          <i data-lucide="layout-dashboard"></i>
 
-          </a>
+          <span>Dashboard</span>
 
-          <a href="products.html">
+        </a>
 
-            <i data-lucide="package"></i>
+        <a href="products.html">
 
-            <span>Products</span>
+          <i data-lucide="package"></i>
 
-          </a>
+          <span>Products</span>
 
-          <a href="categories.html">
+        </a>
 
-            <i data-lucide="folder-kanban"></i>
+        <a href="categories.html">
 
-            <span>Categories</span>
+          <i data-lucide="folder-kanban"></i>
 
-          </a>
+          <span>Categories</span>
 
-          <a href="transactions.html">
+        </a>
 
-            <i data-lucide="receipt-text"></i>
+        <a href="transactions.html">
 
-            <span>Transactions</span>
+          <i data-lucide="receipt-text"></i>
 
-          </a>
+          <span>Transactions</span>
 
-          <a href="admin.html">
+        </a>
 
-            <i data-lucide="users"></i>
+        <a href="admin.html">
 
-            <span>User Management</span>
+          <i data-lucide="users"></i>
 
-          </a>
+          <span>User Management</span>
 
-          <a
-            href="backup.html"
-            class="active"
-          >
+        </a>
 
-            <i data-lucide="database-backup"></i>
+        <a
+          href="backup.html"
+          class="active"
+        >
 
-            <span>Backup & Restore</span>
+          <i data-lucide="database-backup"></i>
 
-          </a>
+          <span>Backup & Restore</span>
 
-          <a href="reports.html">
+        </a>
 
-            <i data-lucide="file-bar-chart-2"></i>
+        <a href="reports.html">
 
-            <span>Reports</span>
+          <i data-lucide="file-bar-chart-2"></i>
 
-          </a>
+          <span>Reports</span>
 
-        </nav>
+        </a>
 
-        <!-- Footer -->
+      </nav>
 
-        <footer class="sidebar-footer">
+      <!-- Footer -->
 
-          <button
-            class="logout-btn"
-            onclick="logout()"
-          >
+      <div class="sidebar-footer">
 
-            <i data-lucide="log-out"></i>
+        <button
+          class="logout-btn"
+          onclick="logout()"
+        >
 
-            <span>Logout</span>
+          <i data-lucide="log-out"></i>
 
-          </button>
+          <span>Logout</span>
 
-        </footer>
+        </button>
 
       </div>
 
     </aside>
 
     <!-- ===================================================== -->
-    <!-- Main -->
+    <!-- Main Content -->
     <!-- ===================================================== -->
 
     <main class="main-content">
@@ -192,12 +192,14 @@
 
           <div>
 
+            <!-- Badge -->
+
             <div class="page-badge">
 
               <i data-lucide="shield-check"></i>
 
               <span>
-                System Protection
+                Enterprise Data Protection
               </span>
 
             </div>
@@ -207,8 +209,8 @@
             </h1>
 
             <p>
-              Manage backup snapshots, recovery points,
-              automated backups, and system restore operations.
+              Manage compressed recovery snapshots, restore points,
+              disaster recovery operations, and enterprise backup archives.
             </p>
 
           </div>
@@ -247,6 +249,22 @@
 
           </button>
 
+          <!-- Restore Upload -->
+
+          <button
+            class="secondary-btn"
+            id="uploadBackupBtn"
+            onclick="document.getElementById('restoreFileInput').click()"
+          >
+
+            <i data-lucide="upload"></i>
+
+            <span>
+              Upload Backup
+            </span>
+
+          </button>
+
           <!-- Create -->
 
           <button
@@ -270,6 +288,63 @@
         </div>
 
       </header>
+
+      <!-- ===================================================== -->
+      <!-- Hidden Restore Input -->
+      <!-- ===================================================== -->
+
+      <input
+        type="file"
+        id="restoreFileInput"
+        accept=".zip,.bao,.bao-backup"
+        hidden
+      />
+
+      <!-- ===================================================== -->
+      <!-- Enterprise Banner -->
+      <!-- ===================================================== -->
+
+      <section class="enterprise-banner">
+
+        <div class="enterprise-banner-left">
+
+          <div class="enterprise-banner-icon">
+
+            <i data-lucide="shield-check"></i>
+
+          </div>
+
+          <div>
+
+            <h3>
+              Enterprise Backup Protection Enabled
+            </h3>
+
+            <p>
+              Backups are exported as compressed archive snapshots
+              with structured metadata, validation manifests,
+              and scalable restore architecture.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="enterprise-banner-right">
+
+          <div class="backup-format-badge">
+
+            <i data-lucide="archive"></i>
+
+            <span>
+              ZIP Snapshot Format
+            </span>
+
+          </div>
+
+        </div>
+
+      </section>
 
       <!-- ===================================================== -->
       <!-- Stats -->
@@ -301,7 +376,7 @@
 
             <span class="stats-meta">
 
-              System Snapshots
+              Recovery Snapshots
 
             </span>
 
@@ -341,31 +416,31 @@
 
         </article>
 
-        <!-- Auto Backup -->
+        <!-- Compression -->
 
         <article class="stat-card">
 
           <div class="stat-icon orange">
 
-            <i data-lucide="shield-check"></i>
+            <i data-lucide="archive"></i>
 
           </div>
 
           <div class="stat-content">
 
             <p>
-              Auto Backup
+              Compression
             </p>
 
             <h3>
 
-              Daily
+              ZIP Archive
 
             </h3>
 
             <span class="stats-meta">
 
-              Enabled
+              Optimized Storage
 
             </span>
 
@@ -397,7 +472,7 @@
 
             <span class="stats-meta">
 
-              Backup Storage
+              Compressed Backups
 
             </span>
 
@@ -524,7 +599,7 @@
               </span>
 
               <strong>
-                JSON Snapshot
+                Compressed ZIP Archive
               </strong>
 
             </div>
@@ -532,11 +607,11 @@
             <div class="recovery-item">
 
               <span>
-                Auto Backup
+                Compression
               </span>
 
               <strong>
-                Daily Enabled
+                DEFLATE Level 9
               </strong>
 
             </div>
@@ -548,7 +623,7 @@
               </span>
 
               <strong>
-                Full System Restore
+                Full System Recovery
               </strong>
 
             </div>
@@ -556,11 +631,11 @@
             <div class="recovery-item">
 
               <span>
-                Rotation Policy
+                Validation
               </span>
 
               <strong>
-                Latest 3 Versions
+                Manifest Verification
               </strong>
 
             </div>
@@ -600,11 +675,12 @@
             </h2>
 
             <p>
-              Download, restore, manage,
-              and monitor backup snapshots.
+              Download, restore, validate, and manage backup archives
             </p>
 
           </div>
+
+          <!-- Actions -->
 
           <div class="table-actions">
 
@@ -613,10 +689,10 @@
               onclick="refreshBackups()"
             >
 
-              <i data-lucide="rotate-cw"></i>
+              <i data-lucide="refresh-cw"></i>
 
               <span>
-                Reload
+                Refresh
               </span>
 
             </button>
@@ -639,6 +715,8 @@
 
                 <th>Created At</th>
 
+                <th>Format</th>
+
                 <th>Size</th>
 
                 <th>Status</th>
@@ -654,7 +732,7 @@
               <tr>
 
                 <td
-                  colspan="5"
+                  colspan="6"
                   class="table-loading"
                 >
 
@@ -669,7 +747,7 @@
                       </h4>
 
                       <p>
-                        Synchronizing backup history from Supabase.
+                        Synchronizing compressed backup archives.
                       </p>
 
                     </div>
@@ -704,8 +782,8 @@
           </h3>
 
           <p>
-            No backup snapshots are currently available.
-            Create your first backup to protect inventory data.
+            No compressed recovery snapshots are currently available.
+            Create your first enterprise backup archive to protect system data.
           </p>
 
           <button
@@ -751,7 +829,7 @@
           </h2>
 
           <p>
-            Restore a previous snapshot and replace current system data.
+            Restore a compressed system snapshot and replace current data.
           </p>
 
         </div>
@@ -771,6 +849,8 @@
 
       <div class="modal-body">
 
+        <!-- Warning -->
+
         <div class="warning-box">
 
           <div class="warning-icon">
@@ -782,14 +862,75 @@
           <div>
 
             <h4>
-              Critical Operation
+              Critical Recovery Operation
             </h4>
 
             <p>
-              Restoring a backup will overwrite products,
-              categories, transactions, notifications,
-              and inventory system records.
+              Restoring a backup archive will overwrite current products,
+              categories, transactions, notifications, and system logs.
             </p>
+
+          </div>
+
+        </div>
+
+        <!-- Restore Metadata -->
+
+        <div class="restore-metadata-grid">
+
+          <div class="restore-meta-item">
+
+            <span>
+              Backup Version
+            </span>
+
+            <strong id="restoreVersion">
+
+              --
+
+            </strong>
+
+          </div>
+
+          <div class="restore-meta-item">
+
+            <span>
+              Compression
+            </span>
+
+            <strong>
+
+              ZIP Archive
+
+            </strong>
+
+          </div>
+
+          <div class="restore-meta-item">
+
+            <span>
+              Tables Included
+            </span>
+
+            <strong id="restoreTables">
+
+              --
+
+            </strong>
+
+          </div>
+
+          <div class="restore-meta-item">
+
+            <span>
+              Backup Date
+            </span>
+
+            <strong id="restoreDate">
+
+              --
+
+            </strong>
 
           </div>
 
@@ -897,7 +1038,7 @@
             </h4>
 
             <p>
-              This backup snapshot will be permanently deleted
+              This backup archive will be permanently deleted
               and cannot be recovered afterward.
             </p>
 
@@ -968,6 +1109,27 @@
 
       </p>
 
+      <!-- Progress -->
+
+      <div class="loader-progress-wrapper">
+
+        <div class="loader-progress-bar">
+
+          <div
+            class="loader-progress-fill"
+            id="loaderProgressFill"
+          ></div>
+
+        </div>
+
+        <span id="loaderProgressText">
+
+          0%
+
+        </span>
+
+      </div>
+
     </div>
 
   </div>
@@ -985,15 +1147,33 @@
   <!-- Scripts -->
   <!-- ===================================================== -->
 
+  <!-- Supabase -->
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JSZip -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- FileSaver -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- Auth -->
 
   <script src="app-auth.js"></script>
 
+  <!-- Icons -->
+
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Backup Logic -->
 
   <script src="backup.js"></script>
 
+  <!-- ===================================================== -->
   <!-- Init -->
+  <!-- ===================================================== -->
 
   <script>
 
@@ -1002,6 +1182,7 @@
       () => {
 
         lucide.createIcons();
+
       }
     );
 
